@@ -27,9 +27,10 @@ export default async function PublicResultsPage() {
   if (!results?.length) {
     return (
       <div>
-        <h1 className="mb-6 text-xl font-black uppercase tracking-tight text-black">
+        <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
           Results
         </h1>
+        <div className="mt-2 mb-6 h-1 w-16 bg-[#FFC726]" />
         <p className="text-sm text-zinc-500">
           Results will appear here as matches are played.
         </p>
@@ -39,9 +40,10 @@ export default async function PublicResultsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-black uppercase tracking-tight text-black">
+      <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
         Results
       </h1>
+      <div className="mt-2 mb-6 h-1 w-16 bg-[#FFC726]" />
       <ul className="flex flex-col gap-3">
         {results.map((r, i) => {
           const isKickstart =
@@ -52,14 +54,14 @@ export default async function PublicResultsPage() {
             <li
               key={i}
               className={`rounded-lg border border-zinc-200 bg-white p-4 ${
-                isKickstart ? "border-l-4 border-l-blue-600" : ""
+                isKickstart ? "border-l-4 border-l-[#FFC726]" : ""
               }`}
             >
               <div className="flex items-center gap-3">
                 <span className="flex-1 font-bold text-sm">
                   {r.home_team_name}
                 </span>
-                <span className="font-black text-xl tabular-nums">
+                <span className="font-black text-xl tabular-nums text-[#00267F]">
                   {r.home_score} – {r.away_score}
                 </span>
                 <span className="flex-1 text-right font-bold text-sm">

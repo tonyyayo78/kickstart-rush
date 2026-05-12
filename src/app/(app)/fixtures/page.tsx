@@ -65,9 +65,10 @@ export default async function FixturesPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="mb-6 text-xl font-black uppercase tracking-tight text-black">
+      <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
         Fixtures
       </h1>
+      <div className="mt-2 mb-6 h-1 w-16 bg-[#FFC726]" />
 
       {groups.size === 0 && (
         <p className="text-sm text-zinc-500">No fixtures yet.</p>
@@ -90,7 +91,7 @@ export default async function FixturesPage() {
                   key={f.id}
                   className={`rounded-lg border px-4 py-3 ${
                     isKickstart
-                      ? "border-blue-200 bg-blue-50"
+                      ? "border-[#C7D3F5] bg-[#EEF2FF]"
                       : "border-zinc-200 bg-white"
                   }`}
                 >
@@ -99,7 +100,7 @@ export default async function FixturesPage() {
                     <div className="sm:w-28 shrink-0">
                       {isPlayed ? (
                         <div>
-                          <span className="font-black text-xl tabular-nums">
+                          <span className="font-black text-xl tabular-nums text-[#FFC726]">
                             {score.home_score} – {score.away_score}
                           </span>
                           <span className="block text-xs text-zinc-400">
@@ -118,7 +119,7 @@ export default async function FixturesPage() {
                       <span
                         className={
                           f.home_team.is_kickstart
-                            ? "font-bold text-blue-800"
+                            ? "font-bold text-[#00267F]"
                             : "font-medium"
                         }
                       >
@@ -128,7 +129,7 @@ export default async function FixturesPage() {
                       <span
                         className={
                           f.away_team.is_kickstart
-                            ? "font-bold text-blue-800"
+                            ? "font-bold text-[#00267F]"
                             : "font-medium"
                         }
                       >
@@ -145,7 +146,7 @@ export default async function FixturesPage() {
                       )}
                       <Link
                         href={`/fixtures/${f.id}/result`}
-                        className="rounded border border-blue-600 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-blue-600 transition-colors hover:bg-blue-600 hover:text-white"
+                        className="rounded bg-[#00267F] border-t border-t-[#3349A3] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm shadow-[#00267F]/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
                       >
                         {isPlayed ? "Edit result" : "Enter result"}
                       </Link>

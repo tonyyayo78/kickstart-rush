@@ -36,14 +36,14 @@ export default async function PublicStandingsPage() {
   return (
     <div>
       {/* Hero band — breaks out of the layout's p-6 padding */}
-      <div className="-mx-6 -mt-6 mb-8 bg-blue-600 px-6 py-6 text-white md:py-8">
+      <div className="-mx-6 -mt-6 mb-8 bg-[#00267F] px-6 py-6 text-white md:py-8">
         <div className="mx-auto max-w-4xl">
           <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
             BFA U15 Qualifiers 2026
           </h1>
-          <p className="mt-3 text-blue-100">
-            Live standings for Kickstart Elite and Kickstart Premier in the
-            National Youth Tournament.
+          <p className="mt-3 text-[#B8C5E8]">
+            Live standings for Kickstart Elite and Kickstart Premier in the{" "}
+            <span className="text-[#FFC726] font-bold">National Youth Tournament</span>.
           </p>
         </div>
       </div>
@@ -77,14 +77,14 @@ export default async function PublicStandingsPage() {
                 {comp.rows.map((row, idx) => (
                   <tr
                     key={row.team_name}
-                    className={`transition-colors hover:bg-zinc-50 ${row.is_kickstart ? "bg-blue-50" : ""}`}
+                    className={`transition-colors hover:bg-zinc-50 ${row.is_kickstart ? "bg-[#EEF2FF]" : ""}`}
                   >
                     <td className="px-4 py-3 text-zinc-400 tabular-nums">
-                      {idx + 1}
+                      {idx === 0 ? "★" : idx + 1}
                     </td>
                     <td
                       className={`px-4 py-3 ${
-                        row.is_kickstart ? "font-bold text-blue-800" : ""
+                        row.is_kickstart ? "font-bold text-[#00267F]" : ""
                       }`}
                     >
                       {row.team_name}
@@ -96,7 +96,7 @@ export default async function PublicStandingsPage() {
                     <td className="px-4 py-3 text-center tabular-nums">{row.goals_for}</td>
                     <td className="px-4 py-3 text-center tabular-nums">{row.goals_against}</td>
                     <td className="px-4 py-3 text-center tabular-nums">{row.goal_difference}</td>
-                    <td className="px-4 py-3 text-center font-black tabular-nums text-blue-700">
+                    <td className="px-4 py-3 text-center font-black tabular-nums text-[#FFC726]">
                       {row.points}
                     </td>
                   </tr>

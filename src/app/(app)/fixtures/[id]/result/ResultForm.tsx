@@ -47,7 +47,7 @@ type Props = {
 };
 
 const inputCls =
-  "w-full rounded-md border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/20";
+  "w-full rounded-md border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#00267F]";
 
 function newScorer(teamId: string): ScorerEntry {
   return {
@@ -175,7 +175,7 @@ export default function ResultForm({
             required
             value={homeScore}
             onChange={(e) => setHomeScore(parseInt(e.target.value, 10) || 0)}
-            className="w-20 rounded-md border border-black/10 px-3 py-2 text-center text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-black/20"
+            className="w-20 rounded-md border border-black/10 px-3 py-2 text-center text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-[#00267F]"
             aria-label={`${homeTeam.name} score`}
           />
         </div>
@@ -189,7 +189,7 @@ export default function ResultForm({
             required
             value={awayScore}
             onChange={(e) => setAwayScore(parseInt(e.target.value, 10) || 0)}
-            className="w-20 rounded-md border border-black/10 px-3 py-2 text-center text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-black/20"
+            className="w-20 rounded-md border border-black/10 px-3 py-2 text-center text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-[#00267F]"
             aria-label={`${awayTeam.name} score`}
           />
         </div>
@@ -345,7 +345,7 @@ export default function ResultForm({
         <button
           type="submit"
           disabled={submitting || homeTooMany || awayTooMany}
-          className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity disabled:opacity-50"
+          className="rounded-md bg-[#00267F] border-t border-t-[#3349A3] px-4 py-2 text-sm font-bold uppercase tracking-wide text-white shadow-md shadow-[#00267F]/30 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
         >
           {submitting ? "Saving…" : isEdit ? "Update result" : "Save result"}
         </button>
