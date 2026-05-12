@@ -37,6 +37,12 @@ export default async function AppLayout({
             />
           </a>
           <nav className="flex items-center gap-4 text-sm text-zinc-600">
+            <a href="/fixtures" className="hover:text-foreground transition-colors">
+              Fixtures
+            </a>
+            <a href="/standings" className="hover:text-foreground transition-colors">
+              Standings
+            </a>
             <a href="/squads/KE2026/players" className="hover:text-foreground transition-colors">
               Elite
             </a>
