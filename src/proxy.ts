@@ -44,6 +44,12 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (request.nextUrl.pathname === "/") {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = user ? "/dashboard" : "/public/standings";
+    return NextResponse.redirect(redirectUrl);
+  }
+
   if (!isPublicPath(request.nextUrl.pathname) && !user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/sign-in";
