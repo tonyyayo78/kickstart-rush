@@ -50,6 +50,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  if (request.nextUrl.pathname.startsWith("/public/")) {
+    supabaseResponse.headers.set("X-Robots-Tag", "noindex,nofollow");
+  }
+
   return supabaseResponse;
 }
 
