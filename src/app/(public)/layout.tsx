@@ -13,35 +13,35 @@ export default function PublicLayout({
 }) {
   return (
     <div className="min-h-screen">
-      <header className="border-b border-black/10 bg-white px-6 py-4">
+      <header className="border-b border-zinc-200 bg-white px-4 py-3 md:px-6">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <Link href="/public/fixtures" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <Image
               src="/kickstart-logo.png"
               alt="Kickstart Football Club Barbados"
-              width={180}
+              width={56}
               height={56}
               priority
             />
-            <span className="hidden sm:inline text-3xl font-bold tracking-tight uppercase">
+            <span className="hidden sm:inline text-2xl font-black tracking-tight uppercase">
               Kickstart Rush
             </span>
           </Link>
-          <div className="flex items-center gap-6">
-            <nav className="flex items-center gap-6 text-sm font-medium">
-              <Link href="/public/fixtures" className="hover:text-black/60 transition-colors">
+          <div className="flex items-center gap-4 sm:gap-6">
+            <nav className="flex items-center gap-4 sm:gap-6 text-sm">
+              <Link href="/public/fixtures" className="font-bold uppercase tracking-wide text-zinc-600 hover:text-blue-600 transition-colors">
                 Fixtures
               </Link>
-              <Link href="/public/results" className="hover:text-black/60 transition-colors">
+              <Link href="/public/results" className="font-bold uppercase tracking-wide text-zinc-600 hover:text-blue-600 transition-colors">
                 Results
               </Link>
-              <Link href="/public/standings" className="hover:text-black/60 transition-colors">
+              <Link href="/public/standings" className="font-bold uppercase tracking-wide text-zinc-600 hover:text-blue-600 transition-colors">
                 Standings
               </Link>
             </nav>
             <Link
               href="/sign-in"
-              className="rounded-md border border-black/10 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-black/5"
+              className="rounded bg-blue-600 px-4 py-2 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-blue-700"
             >
               Sign in
             </Link>

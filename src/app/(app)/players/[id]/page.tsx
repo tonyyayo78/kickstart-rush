@@ -66,7 +66,7 @@ export default async function PlayerProfilePage({
 
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold">
+          <h1 className="text-xl font-black uppercase tracking-tight text-black">
             {player.first_name} {player.last_name}
           </h1>
           {player.jersey_number != null && (
@@ -80,7 +80,7 @@ export default async function PlayerProfilePage({
         </span>
       </div>
 
-      <dl className="mb-6 grid grid-cols-2 gap-x-6 gap-y-4 rounded-lg border border-black/10 p-4">
+      <dl className="mb-6 grid grid-cols-2 gap-x-6 gap-y-4 rounded-lg border border-zinc-200 p-4">
         <div>
           <dt className="text-xs text-zinc-400">Position</dt>
           <dd className="text-sm font-medium">{player.preferred_position}</dd>
@@ -105,7 +105,7 @@ export default async function PlayerProfilePage({
       <div className="flex items-center gap-3">
         <Link
           href={`/players/${id}/edit`}
-          className="rounded-md border border-black/10 px-3 py-1.5 text-sm transition-colors hover:bg-black/5"
+          className="rounded bg-blue-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700"
         >
           Edit
         </Link>

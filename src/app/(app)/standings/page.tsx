@@ -35,7 +35,9 @@ export default async function StandingsPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="mb-6 text-xl font-semibold">Standings</h1>
+      <h1 className="mb-6 text-xl font-black uppercase tracking-tight text-black">
+        Standings
+      </h1>
 
       {competitions.size === 0 && (
         <p className="text-sm text-zinc-500">Standings not yet available.</p>
@@ -43,47 +45,51 @@ export default async function StandingsPage() {
 
       {[...competitions.values()].map((comp) => (
         <section key={comp.name} className="mb-10">
-          <h2 className="mb-3 text-base font-semibold">{comp.name}</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[480px] text-sm">
+          <h2 className="mb-3 text-base font-bold uppercase tracking-wide text-zinc-700">
+            {comp.name}
+          </h2>
+          <div className="overflow-x-auto rounded-lg border border-zinc-200">
+            <table className="w-full min-w-[520px] text-sm">
               <thead>
-                <tr className="border-b border-black/10 text-left text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                  <th className="pb-2 pr-3 w-8">Pos</th>
-                  <th className="pb-2 pr-3">Team</th>
-                  <th className="pb-2 px-2 text-center">P</th>
-                  <th className="pb-2 px-2 text-center">W</th>
-                  <th className="pb-2 px-2 text-center">D</th>
-                  <th className="pb-2 px-2 text-center">L</th>
-                  <th className="pb-2 px-2 text-center">GF</th>
-                  <th className="pb-2 px-2 text-center">GA</th>
-                  <th className="pb-2 px-2 text-center">GD</th>
-                  <th className="pb-2 pl-2 text-center font-bold">Pts</th>
+                <tr className="bg-zinc-100 text-left text-xs font-bold uppercase tracking-wide text-zinc-600">
+                  <th className="px-4 py-3 w-8">Pos</th>
+                  <th className="px-4 py-3">Team</th>
+                  <th className="px-4 py-3 text-center">P</th>
+                  <th className="px-4 py-3 text-center">W</th>
+                  <th className="px-4 py-3 text-center">D</th>
+                  <th className="px-4 py-3 text-center">L</th>
+                  <th className="px-4 py-3 text-center">GF</th>
+                  <th className="px-4 py-3 text-center">GA</th>
+                  <th className="px-4 py-3 text-center">GD</th>
+                  <th className="px-4 py-3 text-center">Pts</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-black/5">
+              <tbody className="divide-y divide-zinc-100">
                 {comp.rows.map((row, idx) => (
                   <tr
                     key={row.team_name}
-                    className={row.is_kickstart ? "bg-blue-50" : ""}
+                    className={`transition-colors hover:bg-zinc-50 ${row.is_kickstart ? "bg-blue-50" : ""}`}
                   >
-                    <td className="py-2 pr-3 text-zinc-400 tabular-nums">
+                    <td className="px-4 py-3 text-zinc-400 tabular-nums">
                       {idx + 1}
                     </td>
                     <td
-                      className={`py-2 pr-3 ${
-                        row.is_kickstart ? "font-semibold text-blue-800" : ""
+                      className={`px-4 py-3 ${
+                        row.is_kickstart ? "font-bold text-blue-800" : ""
                       }`}
                     >
                       {row.team_name}
                     </td>
-                    <td className="py-2 px-2 text-center tabular-nums">{row.played}</td>
-                    <td className="py-2 px-2 text-center tabular-nums">{row.won}</td>
-                    <td className="py-2 px-2 text-center tabular-nums">{row.drawn}</td>
-                    <td className="py-2 px-2 text-center tabular-nums">{row.lost}</td>
-                    <td className="py-2 px-2 text-center tabular-nums">{row.goals_for}</td>
-                    <td className="py-2 px-2 text-center tabular-nums">{row.goals_against}</td>
-                    <td className="py-2 px-2 text-center tabular-nums">{row.goal_difference}</td>
-                    <td className="py-2 pl-2 text-center font-bold tabular-nums">{row.points}</td>
+                    <td className="px-4 py-3 text-center tabular-nums">{row.played}</td>
+                    <td className="px-4 py-3 text-center tabular-nums">{row.won}</td>
+                    <td className="px-4 py-3 text-center tabular-nums">{row.drawn}</td>
+                    <td className="px-4 py-3 text-center tabular-nums">{row.lost}</td>
+                    <td className="px-4 py-3 text-center tabular-nums">{row.goals_for}</td>
+                    <td className="px-4 py-3 text-center tabular-nums">{row.goals_against}</td>
+                    <td className="px-4 py-3 text-center tabular-nums">{row.goal_difference}</td>
+                    <td className="px-4 py-3 text-center font-black tabular-nums text-blue-700">
+                      {row.points}
+                    </td>
                   </tr>
                 ))}
               </tbody>
