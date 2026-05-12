@@ -61,7 +61,6 @@ function newScorer(teamId: string): ScorerEntry {
 
 function initialScorers(
   existingResult: ExistingResult | null,
-  homeTeamId: string,
 ): ScorerEntry[] {
   if (!existingResult?.goals.length) return [];
   return existingResult.goals.map((g) => ({
@@ -100,7 +99,7 @@ export default function ResultForm({
     existingResult?.match_notes ?? "",
   );
   const [scorers, setScorers] = useState<ScorerEntry[]>(() =>
-    initialScorers(existingResult, homeTeam.id),
+    initialScorers(existingResult),
   );
   const [submitting, setSubmitting] = useState(false);
 
@@ -155,9 +154,6 @@ export default function ResultForm({
 
   const playersFor = (teamId: string) =>
     teamId === homeTeam.id ? homePlayers : awayPlayers;
-
-  const teamName = (teamId: string) =>
-    teamId === homeTeam.id ? homeTeam.name : awayTeam.name;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">

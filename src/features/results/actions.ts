@@ -170,6 +170,7 @@ export async function deleteResult(
 
   await supabase.from("results").delete().eq("id", resultId);
 
+  revalidatePath(`/fixtures/${fixtureId}/result`);
   revalidatePath("/fixtures");
   revalidatePath("/standings");
   redirect("/fixtures");
