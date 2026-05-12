@@ -2,8 +2,9 @@ import { createAnonPublicClient } from "@/lib/supabase/anon-public";
 
 type Scorer = {
   team_name: string;
-  player_display_name: string;
-  minute: number;
+  player_display_name: string | null;
+  minute: number | null;
+  is_own_goal: boolean;
 };
 
 type Result = {
@@ -51,8 +52,10 @@ export default async function PublicResultsPage() {
               <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
                 {r.scorers.map((s, j) => (
                   <li key={j} className="text-xs text-zinc-500">
-                    {s.player_display_name}{" "}
-                    <span className="text-zinc-400">{s.minute}&apos;</span>
+                    {s.player_display_name ?? s.team_name}
+                    {s.minute != null && (
+                      <span className="text-zinc-400"> {s.minute}&apos;</span>
+                    )}
                   </li>
                 ))}
               </ul>
