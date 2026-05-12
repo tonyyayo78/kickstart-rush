@@ -25,7 +25,19 @@ export default async function AppLayout({
   return (
     <div className="min-h-screen">
       <header className="flex items-center justify-between border-b border-black/10 px-6 py-3">
-        <span className="font-semibold">Kickstart Rush</span>
+        <div className="flex items-center gap-6">
+          <a href="/dashboard" className="font-semibold hover:opacity-75 transition-opacity">
+            Kickstart Rush
+          </a>
+          <nav className="flex items-center gap-4 text-sm text-zinc-600">
+            <a href="/squads/KE2026/players" className="hover:text-foreground transition-colors">
+              Elite
+            </a>
+            <a href="/squads/KP2026/players" className="hover:text-foreground transition-colors">
+              Premier
+            </a>
+          </nav>
+        </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-zinc-600">{displayName}</span>
           <form action={signOut}>
