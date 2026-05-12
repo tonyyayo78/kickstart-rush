@@ -8,6 +8,13 @@ jobs:
   ci:
     name: ci
     runs-on: ubuntu-latest
+    # Typecheck and Build both evaluate env.ts at module load time; these
+    # placeholder values satisfy Zod's shape checks without being real credentials.
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.CI_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.CI_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.CI_SUPABASE_SERVICE_ROLE_KEY }}
+      OWNER_ALLOWED_EMAIL: ${{ secrets.CI_OWNER_ALLOWED_EMAIL }}
     steps:
       - uses: actions/checkout@v4
 
