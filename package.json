@@ -7,8 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
-    "test:e2e": "playwright test"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
@@ -20,7 +19,6 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -29,7 +27,6 @@
     "eslint-config-next": "16.2.6",
     "supabase": "^2.98.2",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "wait-on": "^9.0.10"
+    "typescript": "^5"
   }
 }

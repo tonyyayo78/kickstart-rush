@@ -8,7 +8,9 @@ A fantasy football platform for managing fixtures, results, standings, and playe
 cp .env.example .env.local
 ```
 
-Open `.env.local` and fill in the values from the **kickstart-rush-dev** Supabase project dashboard.
+This app uses a single Supabase project. Local development, Vercel previews, and
+production all connect to the same database. Open `.env.local` and fill in the
+values from the **kickstart-rush-prod** Supabase project dashboard.
 
 ```bash
 npm install
@@ -37,11 +39,11 @@ After applying migrations (`supabase db push`), the response will be:
 
 ## Authentication
 
-Only one email address can sign in: the value of `OWNER_ALLOWED_EMAIL` in your environment (`.env.local` locally, Vercel env vars in production). Both dev and prod are configured to `alythcott@gmail.com`.
+Only one email address can sign in: the value of `OWNER_ALLOWED_EMAIL` in your environment (`.env.local` locally, Vercel env vars in production). The Supabase project is configured to `alythcott@gmail.com`.
 
 To change the allowed email:
 1. Update `OWNER_ALLOWED_EMAIL` in `.env.local` (local) and in Vercel (preview + production).
-2. Run `UPDATE public.app_config SET value = 'new@email.com' WHERE key = 'owner_email';` in the Supabase SQL Editor for each project (dev and prod).
+2. Run `UPDATE public.app_config SET value = 'new@email.com' WHERE key = 'owner_email';` in the Supabase SQL Editor.
 
 The sign-in flow uses Supabase Auth magic links. When you enter your email and click "Send magic link", a one-time link is emailed to you. Clicking it exchanges the code for a session and redirects to `/dashboard`. Sessions expire after 30 days of inactivity.
 
