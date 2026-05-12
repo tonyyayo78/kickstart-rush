@@ -31,8 +31,8 @@ export default async function AppLayout({
             <Image
               src="/kickstart-logo.png"
               alt="Kickstart Football Club Barbados"
-              width={120}
-              height={38}
+              width={150}
+              height={48}
               priority
             />
           </a>

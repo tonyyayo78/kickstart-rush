@@ -19,22 +19,30 @@ export default function PublicLayout({
             <Image
               src="/kickstart-logo.png"
               alt="Kickstart Football Club Barbados"
-              width={140}
-              height={44}
+              width={175}
+              height={56}
               priority
             />
           </Link>
-          <nav className="flex items-center gap-6 text-sm font-medium">
-            <Link href="/public/fixtures" className="hover:text-black/60 transition-colors">
-              Fixtures
+          <div className="flex items-center gap-6">
+            <nav className="flex items-center gap-6 text-sm font-medium">
+              <Link href="/public/fixtures" className="hover:text-black/60 transition-colors">
+                Fixtures
+              </Link>
+              <Link href="/public/results" className="hover:text-black/60 transition-colors">
+                Results
+              </Link>
+              <Link href="/public/standings" className="hover:text-black/60 transition-colors">
+                Standings
+              </Link>
+            </nav>
+            <Link
+              href="/sign-in"
+              className="rounded-md border border-black/10 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-black/5"
+            >
+              Sign in
             </Link>
-            <Link href="/public/results" className="hover:text-black/60 transition-colors">
-              Results
-            </Link>
-            <Link href="/public/standings" className="hover:text-black/60 transition-colors">
-              Standings
-            </Link>
-          </nav>
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-4xl p-6">{children}</main>
