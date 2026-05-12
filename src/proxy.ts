@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
+const STATIC_EXT = /\.(png|jpg|jpeg|gif|svg|ico|webp|woff2?|ttf|eot)$/i;
+
 function isPublicPath(pathname: string): boolean {
   return (
     pathname === "/sign-in" ||
@@ -8,7 +10,8 @@ function isPublicPath(pathname: string): boolean {
     pathname === "/api/health" ||
     pathname.startsWith("/public/") ||
     pathname === "/favicon.ico" ||
-    pathname === "/robots.txt"
+    pathname === "/robots.txt" ||
+    STATIC_EXT.test(pathname)
   );
 }
 
@@ -65,7 +68,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Skip Next.js static assets and image optimisation — they never need auth.
-    "/((?!_next/static|_next/image|_next/webpack-hmr|favicon.ico|robots.txt).*)",
+    // Skip Next.js internals, favicon, robots, and any public static file
+    // (images, fonts, etc.) — these never need auth checks.
+    "/((?!_next/static|_next/image|_next/webpack-hmr|favicon.ico|robots.txt|.*\\.(?:png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot)).*)",
   ],
 };
