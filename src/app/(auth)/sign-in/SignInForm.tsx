@@ -20,7 +20,7 @@ export default function SignInForm() {
           type="email"
           required
           autoComplete="email"
-          className="rounded-md border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/20"
+          className="rounded-md border border-zinc-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
       </div>
       <div className="flex flex-col gap-1.5">
@@ -33,13 +33,13 @@ export default function SignInForm() {
           type="password"
           required
           autoComplete="current-password"
-          className="rounded-md border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/20"
+          className="rounded-md border border-zinc-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
       </div>
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity disabled:opacity-50"
+        className="rounded bg-blue-600 px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>

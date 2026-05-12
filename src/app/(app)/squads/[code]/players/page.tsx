@@ -45,10 +45,17 @@ export default async function SquadPlayersPage({
   return (
     <div className="max-w-2xl">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">{squad.name}</h1>
+        <div>
+          <h1 className="text-xl font-black uppercase tracking-tight text-black">
+            {squad.name}
+          </h1>
+          <p className="mt-0.5 text-sm text-zinc-500">
+            {players?.length ?? 0} player{players?.length !== 1 ? "s" : ""}
+          </p>
+        </div>
         <Link
           href={`/squads/${code}/players/new`}
-          className="rounded-md bg-foreground px-3 py-1.5 text-sm font-medium text-background"
+          className="rounded bg-blue-600 px-4 py-2 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-blue-700"
         >
           Add player
         </Link>
@@ -59,41 +66,52 @@ export default async function SquadPlayersPage({
           No players yet.{" "}
           <Link
             href={`/squads/${code}/players/new`}
-            className="underline hover:text-zinc-700"
+            className="text-blue-600 underline hover:text-blue-700"
           >
             Add the first one.
           </Link>
         </p>
       ) : (
-        <ul className="flex flex-col divide-y divide-black/5 rounded-lg border border-black/10">
-          {players.map((p) => (
-            <li key={p.id}>
-              <Link
-                href={`/players/${p.id}`}
-                className="flex items-center gap-4 px-4 py-3 hover:bg-black/[0.02] transition-colors"
-              >
-                <span className="w-8 text-right text-sm font-mono text-zinc-400">
-                  {p.jersey_number != null ? `#${p.jersey_number}` : "—"}
-                </span>
-                <span className="flex-1 text-sm font-medium">
-                  {p.display_name}
-                </span>
-                <span className="text-xs text-zinc-500 w-8">
-                  {p.preferred_position}
-                </span>
-                <span
-                  className={`rounded px-2 py-0.5 text-xs font-medium ${STATUS_CLS[p.status] ?? ""}`}
-                >
-                  {STATUS_LABEL[p.status] ?? p.status}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="overflow-x-auto rounded-lg border border-zinc-200">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-zinc-100 text-left text-xs font-bold uppercase tracking-wide text-zinc-600">
+                <th className="px-4 py-3 w-12">#</th>
+                <th className="px-4 py-3">Name</th>
+                <th className="hidden px-4 py-3 sm:table-cell">Position</th>
+                <th className="px-4 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100">
+              {players.map((p) => (
+                <tr key={p.id} className="transition-colors hover:bg-zinc-50">
+                  <td className="px-4 py-3 font-mono text-right text-zinc-400">
+                    {p.jersey_number != null ? `#${p.jersey_number}` : "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/players/${p.id}`}
+                      className="font-medium hover:text-blue-600 transition-colors"
+                    >
+                      {p.display_name}
+                    </Link>
+                  </td>
+                  <td className="hidden px-4 py-3 text-zinc-500 sm:table-cell">
+                    {p.preferred_position}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`rounded px-2 py-0.5 text-xs font-medium ${STATUS_CLS[p.status] ?? ""}`}
+                    >
+                      {STATUS_LABEL[p.status] ?? p.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
-      <p className="mt-3 text-xs text-zinc-400">
-        {players?.length ?? 0} player{players?.length !== 1 ? "s" : ""}
-      </p>
     </div>
   );
 }

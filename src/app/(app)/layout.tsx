@@ -25,41 +25,41 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-screen">
-      <header className="flex items-center justify-between border-b border-black/10 bg-white px-6 py-4">
+      <header className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3 md:px-6">
         <div className="flex items-center gap-6">
           <a href="/dashboard" className="flex items-center gap-3 hover:opacity-75 transition-opacity">
             <Image
               src="/kickstart-logo.png"
               alt="Kickstart Football Club Barbados"
-              width={150}
-              height={48}
+              width={56}
+              height={56}
               priority
             />
-            <span className="hidden sm:inline text-2xl font-bold tracking-tight uppercase">
+            <span className="hidden sm:inline text-2xl font-black tracking-tight uppercase">
               Kickstart Rush
             </span>
           </a>
-          <nav className="flex items-center gap-4 text-sm text-zinc-600">
-            <a href="/fixtures" className="hover:text-foreground transition-colors">
+          <nav className="flex items-center gap-4 text-sm">
+            <a href="/fixtures" className="font-bold uppercase tracking-wide text-zinc-600 hover:text-blue-600 transition-colors">
               Fixtures
             </a>
-            <a href="/standings" className="hover:text-foreground transition-colors">
+            <a href="/standings" className="font-bold uppercase tracking-wide text-zinc-600 hover:text-blue-600 transition-colors">
               Standings
             </a>
-            <a href="/squads/KE2026/players" className="hover:text-foreground transition-colors">
+            <a href="/squads/KE2026/players" className="font-bold uppercase tracking-wide text-zinc-600 hover:text-blue-600 transition-colors">
               Elite
             </a>
-            <a href="/squads/KP2026/players" className="hover:text-foreground transition-colors">
+            <a href="/squads/KP2026/players" className="font-bold uppercase tracking-wide text-zinc-600 hover:text-blue-600 transition-colors">
               Premier
             </a>
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-zinc-600">{displayName}</span>
+          <span className="hidden sm:block text-sm text-zinc-600">{displayName}</span>
           <form action={signOut}>
             <button
               type="submit"
-              className="rounded-md border border-black/10 px-3 py-1.5 text-sm transition-colors hover:bg-black/5"
+              className="rounded-md border border-zinc-200 px-3 py-1.5 text-sm transition-colors hover:bg-zinc-50"
             >
               Sign out
             </button>

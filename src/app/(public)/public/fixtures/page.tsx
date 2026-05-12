@@ -2,18 +2,22 @@ import { createAnonPublicClient } from "@/lib/supabase/anon-public";
 
 const BARBADOS_TZ = "America/Barbados";
 
-function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
+function formatDateHeader(iso: string): string {
+  const date = new Date(iso);
+  const parts = new Intl.DateTimeFormat("en-BB", {
     timeZone: BARBADOS_TZ,
-    weekday: "short",
+    weekday: "long",
     day: "numeric",
     month: "long",
-    year: "numeric",
-  }).format(new Date(iso));
+  }).formatToParts(date);
+  const weekday = parts.find((p) => p.type === "weekday")?.value ?? "";
+  const day = parts.find((p) => p.type === "day")?.value ?? "";
+  const month = parts.find((p) => p.type === "month")?.value ?? "";
+  return `${weekday} ${day} ${month}`.toUpperCase();
 }
 
 function formatTime(iso: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat("en-BB", {
     timeZone: BARBADOS_TZ,
     hour: "numeric",
     minute: "2-digit",
@@ -37,6 +41,8 @@ type Fixture = {
   away_team_name: string;
   home_is_kickstart: boolean;
   away_is_kickstart: boolean;
+  home_score: number | null;
+  away_score: number | null;
 };
 
 export default async function PublicFixturesPage() {
@@ -55,7 +61,9 @@ export default async function PublicFixturesPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">Fixtures</h1>
+      <h1 className="mb-6 text-xl font-black uppercase tracking-tight text-black">
+        Fixtures
+      </h1>
 
       {groups.size === 0 && (
         <p className="text-sm text-zinc-500">No fixtures scheduled.</p>
@@ -63,56 +71,74 @@ export default async function PublicFixturesPage() {
 
       {[...groups.entries()].map(([dateKey, dayFixtures]) => (
         <section key={dateKey} className="mb-8">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            {formatDate(dayFixtures[0].kickoff_at)}
+          <h2 className="mb-3 border-b border-zinc-200 pb-2 text-xl font-black uppercase tracking-tight text-black">
+            {formatDateHeader(dayFixtures[0].kickoff_at)}
           </h2>
           <ul className="flex flex-col gap-2">
             {dayFixtures.map((f, i) => {
               const isKickstart = f.home_is_kickstart || f.away_is_kickstart;
+              const isPlayed =
+                f.status === "played" &&
+                f.home_score !== null &&
+                f.away_score !== null;
+
               return (
                 <li
                   key={i}
                   className={`rounded-lg border px-4 py-3 ${
                     isKickstart
                       ? "border-blue-200 bg-blue-50"
-                      : "border-black/10 bg-white"
+                      : "border-zinc-200 bg-white"
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                        <span
-                          className={
-                            f.home_is_kickstart
-                              ? "font-semibold text-blue-800"
-                              : "font-medium"
-                          }
-                        >
-                          {f.home_team_name}
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                    {/* Time or scoreline */}
+                    <div className="sm:w-28 shrink-0">
+                      {isPlayed ? (
+                        <div>
+                          <span className="font-black text-xl tabular-nums">
+                            {f.home_score} – {f.away_score}
+                          </span>
+                          <span className="block text-xs text-zinc-400">
+                            Played
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-sm font-medium tabular-nums text-zinc-700">
+                          {formatTime(f.kickoff_at)}
                         </span>
-                        <span className="text-xs text-zinc-400">vs</span>
-                        <span
-                          className={
-                            f.away_is_kickstart
-                              ? "font-semibold text-blue-800"
-                              : "font-medium"
-                          }
-                        >
-                          {f.away_team_name}
-                        </span>
-                      </div>
-                      <p className="mt-0.5 text-xs text-zinc-500">{f.venue}</p>
-                    </div>
-                    <div className="shrink-0 text-right text-sm">
-                      <p className="font-medium tabular-nums">
-                        {formatTime(f.kickoff_at)}
-                      </p>
-                      {f.status !== "scheduled" && (
-                        <p className="mt-0.5 text-xs capitalize text-zinc-400">
-                          {f.status}
-                        </p>
                       )}
                     </div>
+
+                    {/* Team names */}
+                    <div className="flex-1 text-sm">
+                      <span
+                        className={
+                          f.home_is_kickstart
+                            ? "font-bold text-blue-800"
+                            : "font-medium"
+                        }
+                      >
+                        {f.home_team_name}
+                      </span>
+                      <span className="mx-2 text-zinc-400">vs</span>
+                      <span
+                        className={
+                          f.away_is_kickstart
+                            ? "font-bold text-blue-800"
+                            : "font-medium"
+                        }
+                      >
+                        {f.away_team_name}
+                      </span>
+                    </div>
+
+                    {/* Venue */}
+                    {f.venue && (
+                      <p className="text-xs text-zinc-400 sm:shrink-0">
+                        {f.venue}
+                      </p>
+                    )}
                   </div>
                 </li>
               );

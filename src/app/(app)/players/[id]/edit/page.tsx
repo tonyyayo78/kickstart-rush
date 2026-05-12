@@ -34,7 +34,7 @@ export default async function EditPlayerPage({
           ← {player.first_name} {player.last_name}
         </Link>
       </div>
-      <h1 className="mb-6 text-xl font-semibold">Edit player</h1>
+      <h1 className="mb-6 text-xl font-black uppercase tracking-tight text-black">Edit player</h1>
       <PlayerForm
         action={action}
         defaultValues={{
