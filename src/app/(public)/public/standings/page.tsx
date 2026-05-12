@@ -1,4 +1,7 @@
+import Link from "next/link";
 import { createAnonPublicClient } from "@/lib/supabase/anon-public";
+
+const BARBADOS_TZ = "America/Barbados";
 
 type StandingRow = {
   competition_code: string;
@@ -15,12 +18,60 @@ type StandingRow = {
   points: number;
 };
 
+type UpcomingFixture = {
+  kickoff_at: string;
+  venue: string;
+  home_team_name: string;
+  away_team_name: string;
+  home_is_kickstart: boolean;
+  away_is_kickstart: boolean;
+};
+
+function formatDateHeader(iso: string): string {
+  const parts = new Intl.DateTimeFormat("en-BB", {
+    timeZone: BARBADOS_TZ,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).formatToParts(new Date(iso));
+  const weekday = parts.find((p) => p.type === "weekday")?.value ?? "";
+  const day = parts.find((p) => p.type === "day")?.value ?? "";
+  const month = parts.find((p) => p.type === "month")?.value ?? "";
+  return `${weekday} ${day} ${month}`.toUpperCase();
+}
+
+function formatTime(iso: string): string {
+  return new Intl.DateTimeFormat("en-BB", {
+    timeZone: BARBADOS_TZ,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date(iso));
+}
+
+function localDateKey(iso: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: BARBADOS_TZ,
+  }).format(new Date(iso));
+}
+
 export default async function PublicStandingsPage() {
   const supabase = await createAnonPublicClient();
-  const { data: rows } = await supabase
-    .from("public_standings")
-    .select("*")
-    .returns<StandingRow[]>();
+
+  const [{ data: rows }, { data: upcomingRaw }] = await Promise.all([
+    supabase.from("public_standings").select("*").returns<StandingRow[]>(),
+    supabase
+      .from("public_fixtures")
+      .select(
+        "kickoff_at, venue, home_team_name, away_team_name, home_is_kickstart, away_is_kickstart",
+      )
+      .eq("status", "scheduled")
+      .gte("kickoff_at", new Date().toISOString())
+      .or("home_is_kickstart.eq.true,away_is_kickstart.eq.true")
+      .order("kickoff_at", { ascending: true })
+      .limit(5)
+      .returns<UpcomingFixture[]>(),
+  ]);
 
   const competitions = new Map<string, { name: string; rows: StandingRow[] }>();
   for (const row of rows ?? []) {
@@ -31,6 +82,14 @@ export default async function PublicStandingsPage() {
       });
     }
     competitions.get(row.competition_code)!.rows.push(row);
+  }
+
+  // Group upcoming fixtures by local date
+  const upcomingGroups = new Map<string, UpcomingFixture[]>();
+  for (const f of upcomingRaw ?? []) {
+    const key = localDateKey(f.kickoff_at);
+    if (!upcomingGroups.has(key)) upcomingGroups.set(key, []);
+    upcomingGroups.get(key)!.push(f);
   }
 
   return (
@@ -47,6 +106,71 @@ export default async function PublicStandingsPage() {
           </p>
         </div>
       </div>
+
+      {/* Next matches */}
+      {upcomingGroups.size > 0 && (
+        <section className="mb-10">
+          <h2 className="text-xl font-black uppercase tracking-tight">
+            Next Matches
+          </h2>
+          <div className="mt-2 mb-4 h-1 w-12 bg-[#FFC726]" />
+
+          <div className="flex flex-col gap-4">
+            {[...upcomingGroups.entries()].map(([dateKey, fixtures]) => (
+              <div key={dateKey}>
+                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-zinc-500">
+                  {formatDateHeader(fixtures[0].kickoff_at)}
+                </p>
+                <ul className="flex flex-col gap-2">
+                  {fixtures.map((f, i) => (
+                    <li
+                      key={i}
+                      className="flex items-start gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3"
+                    >
+                      <span className="w-16 shrink-0 pt-px text-sm tabular-nums text-zinc-500">
+                        {formatTime(f.kickoff_at)}
+                      </span>
+                      <div className="min-w-0 flex-1 text-sm">
+                        <span
+                          className={
+                            f.home_is_kickstart
+                              ? "font-bold text-[#00267F]"
+                              : "font-medium"
+                          }
+                        >
+                          {f.home_team_name}
+                        </span>
+                        <span className="mx-1.5 text-zinc-400">vs</span>
+                        <span
+                          className={
+                            f.away_is_kickstart
+                              ? "font-bold text-[#00267F]"
+                              : "font-medium"
+                          }
+                        >
+                          {f.away_team_name}
+                        </span>
+                        {f.venue && (
+                          <span className="mt-0.5 block text-xs text-zinc-400">
+                            {f.venue}
+                          </span>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <Link
+            href="/public/fixtures"
+            className="mt-4 inline-block text-sm font-medium text-[#00267F] hover:underline"
+          >
+            View all fixtures →
+          </Link>
+        </section>
+      )}
 
       {competitions.size === 0 && (
         <p className="text-sm text-zinc-500">Standings not yet available.</p>
