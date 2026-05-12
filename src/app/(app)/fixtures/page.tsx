@@ -137,12 +137,20 @@ export default async function FixturesPage() {
                       </span>
                     </div>
 
-                    {/* Venue + action */}
-                    <div className="flex items-center justify-between gap-3 sm:shrink-0 sm:justify-end">
+                    {/* Venue + actions */}
+                    <div className="flex items-center justify-between gap-2 sm:shrink-0 sm:justify-end">
                       {f.venue && (
                         <span className="hidden text-xs text-zinc-400 sm:block">
                           {f.venue}
                         </span>
+                      )}
+                      {isKickstart && (
+                        <Link
+                          href={`/fixtures/${f.id}/fees`}
+                          className="rounded border border-zinc-300 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-zinc-600 transition-colors hover:border-[#00267F] hover:text-[#00267F]"
+                        >
+                          Fees
+                        </Link>
                       )}
                       <Link
                         href={`/fixtures/${f.id}/result`}
