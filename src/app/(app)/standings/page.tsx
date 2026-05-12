@@ -35,9 +35,10 @@ export default async function StandingsPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="mb-6 text-xl font-black uppercase tracking-tight text-black">
+      <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
         Standings
       </h1>
+      <div className="mt-2 mb-6 h-1 w-16 bg-[#FFC726]" />
 
       {competitions.size === 0 && (
         <p className="text-sm text-zinc-500">Standings not yet available.</p>
@@ -68,14 +69,14 @@ export default async function StandingsPage() {
                 {comp.rows.map((row, idx) => (
                   <tr
                     key={row.team_name}
-                    className={`transition-colors hover:bg-zinc-50 ${row.is_kickstart ? "bg-blue-50" : ""}`}
+                    className={`transition-colors hover:bg-zinc-50 ${row.is_kickstart ? "bg-[#EEF2FF]" : ""}`}
                   >
                     <td className="px-4 py-3 text-zinc-400 tabular-nums">
-                      {idx + 1}
+                      {idx === 0 ? "★" : idx + 1}
                     </td>
                     <td
                       className={`px-4 py-3 ${
-                        row.is_kickstart ? "font-bold text-blue-800" : ""
+                        row.is_kickstart ? "font-bold text-[#00267F]" : ""
                       }`}
                     >
                       {row.team_name}
@@ -87,7 +88,7 @@ export default async function StandingsPage() {
                     <td className="px-4 py-3 text-center tabular-nums">{row.goals_for}</td>
                     <td className="px-4 py-3 text-center tabular-nums">{row.goals_against}</td>
                     <td className="px-4 py-3 text-center tabular-nums">{row.goal_difference}</td>
-                    <td className="px-4 py-3 text-center font-black tabular-nums text-blue-700">
+                    <td className="px-4 py-3 text-center font-black tabular-nums text-[#FFC726]">
                       {row.points}
                     </td>
                   </tr>

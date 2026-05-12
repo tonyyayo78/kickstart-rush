@@ -13,33 +13,34 @@ export default function PublicLayout({
 }) {
   return (
     <div className="min-h-screen">
-      <header className="border-b border-zinc-200 bg-white px-4 py-4 md:px-6">
+      <header className="border-b border-zinc-200 bg-white px-4 py-5 md:px-6 md:py-6">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
-          <Link href="/public/fixtures" className="hover:opacity-80 transition-opacity">
+          <Link href="/public/fixtures" className="hover:opacity-80 transition-opacity shrink-0">
             <Image
               src="/kickstart-logo.png"
               alt="Kickstart Football Club Barbados"
-              width={160}
-              height={84}
+              width={240}
+              height={126}
+              className="h-[84px] w-auto sm:h-[126px]"
               priority
               unoptimized
             />
           </Link>
           <div className="flex items-center gap-4 sm:gap-6">
             <nav className="flex items-center gap-4 sm:gap-6 text-sm">
-              <Link href="/public/fixtures" className="font-bold uppercase tracking-wide text-zinc-600 hover:text-blue-600 transition-colors">
+              <Link href="/public/fixtures" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
                 Fixtures
               </Link>
-              <Link href="/public/results" className="font-bold uppercase tracking-wide text-zinc-600 hover:text-blue-600 transition-colors">
+              <Link href="/public/results" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
                 Results
               </Link>
-              <Link href="/public/standings" className="font-bold uppercase tracking-wide text-zinc-600 hover:text-blue-600 transition-colors">
+              <Link href="/public/standings" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
                 Standings
               </Link>
             </nav>
             <Link
               href="/sign-in"
-              className="rounded bg-blue-600 px-4 py-2 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-blue-700"
+              className="rounded bg-[#00267F] border-t border-t-[#3349A3] px-4 py-2 text-sm font-bold uppercase tracking-wide text-white shadow-md shadow-[#00267F]/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
             >
               Sign in
             </Link>

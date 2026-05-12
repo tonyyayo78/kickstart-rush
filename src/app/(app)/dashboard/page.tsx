@@ -34,19 +34,22 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Welcome, {name}</h1>
-      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
+        Welcome, {name}
+      </h1>
+      <div className="mt-2 mb-8 h-1 w-16 bg-[#FFC726]" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {QUICK_LINKS.map((card) => (
           <a
             key={card.href}
             href={card.href}
-            className="rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:border-blue-600 hover:shadow-md"
+            className="rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-[#00267F] hover:shadow-lg"
           >
             <h2 className="text-lg font-bold uppercase tracking-tight">
               {card.title}
             </h2>
             <p className="mt-1 text-sm text-zinc-600">{card.description}</p>
-            <p className="mt-4 font-bold text-blue-600">→</p>
+            <p className="mt-4 font-bold text-[#FFC726]">→</p>
           </a>
         ))}
       </div>

@@ -61,9 +61,10 @@ export default async function PublicFixturesPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-black uppercase tracking-tight text-black">
+      <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
         Fixtures
       </h1>
+      <div className="mt-2 mb-6 h-1 w-16 bg-[#FFC726]" />
 
       {groups.size === 0 && (
         <p className="text-sm text-zinc-500">No fixtures scheduled.</p>
@@ -87,7 +88,7 @@ export default async function PublicFixturesPage() {
                   key={i}
                   className={`rounded-lg border px-4 py-3 ${
                     isKickstart
-                      ? "border-blue-200 bg-blue-50"
+                      ? "border-[#C7D3F5] bg-[#EEF2FF]"
                       : "border-zinc-200 bg-white"
                   }`}
                 >
@@ -96,7 +97,7 @@ export default async function PublicFixturesPage() {
                     <div className="sm:w-28 shrink-0">
                       {isPlayed ? (
                         <div>
-                          <span className="font-black text-xl tabular-nums">
+                          <span className="font-black text-xl tabular-nums text-[#FFC726]">
                             {f.home_score} – {f.away_score}
                           </span>
                           <span className="block text-xs text-zinc-400">
@@ -115,7 +116,7 @@ export default async function PublicFixturesPage() {
                       <span
                         className={
                           f.home_is_kickstart
-                            ? "font-bold text-blue-800"
+                            ? "font-bold text-[#00267F]"
                             : "font-medium"
                         }
                       >
@@ -125,7 +126,7 @@ export default async function PublicFixturesPage() {
                       <span
                         className={
                           f.away_is_kickstart
-                            ? "font-bold text-blue-800"
+                            ? "font-bold text-[#00267F]"
                             : "font-medium"
                         }
                       >

@@ -23,7 +23,7 @@ function FieldError({ errors }: { errors?: string[] }) {
 }
 
 const inputCls =
-  "w-full rounded-md border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/20";
+  "w-full rounded-md border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#00267F]";
 
 export default function PlayerForm({
   action,
@@ -165,7 +165,7 @@ export default function PlayerForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity disabled:opacity-50"
+          className="rounded-md bg-[#00267F] border-t border-t-[#3349A3] px-4 py-2 text-sm font-bold uppercase tracking-wide text-white shadow-md shadow-[#00267F]/30 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
         >
           {pending ? "Saving…" : submitLabel}
         </button>

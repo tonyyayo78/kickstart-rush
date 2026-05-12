@@ -25,29 +25,30 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-screen">
-      <header className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-4 md:px-6">
+      <header className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-5 md:px-6 md:py-6">
         <div className="flex items-center gap-6">
-          <a href="/dashboard" className="hover:opacity-75 transition-opacity">
+          <a href="/dashboard" className="hover:opacity-75 transition-opacity shrink-0">
             <Image
               src="/kickstart-logo.png"
               alt="Kickstart Football Club Barbados"
-              width={140}
-              height={74}
+              width={200}
+              height={105}
+              className="h-[74px] w-auto sm:h-[105px]"
               priority
               unoptimized
             />
           </a>
           <nav className="flex items-center gap-4 text-sm">
-            <a href="/fixtures" className="font-bold uppercase tracking-wide text-zinc-600 hover:text-blue-600 transition-colors">
+            <a href="/fixtures" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
               Fixtures
             </a>
-            <a href="/standings" className="font-bold uppercase tracking-wide text-zinc-600 hover:text-blue-600 transition-colors">
+            <a href="/standings" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
               Standings
             </a>
-            <a href="/squads/KE2026/players" className="font-bold uppercase tracking-wide text-zinc-600 hover:text-blue-600 transition-colors">
+            <a href="/squads/KE2026/players" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
               Elite
             </a>
-            <a href="/squads/KP2026/players" className="font-bold uppercase tracking-wide text-zinc-600 hover:text-blue-600 transition-colors">
+            <a href="/squads/KP2026/players" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
               Premier
             </a>
           </nav>
