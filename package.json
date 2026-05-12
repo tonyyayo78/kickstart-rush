@@ -29,6 +29,7 @@
     "eslint-config-next": "16.2.6",
     "supabase": "^2.98.2",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^9.0.10"
   }
 }
