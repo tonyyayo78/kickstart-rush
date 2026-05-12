@@ -41,7 +41,7 @@ Only one email address can sign in: the value of `OWNER_ALLOWED_EMAIL` in your e
 
 To change the allowed email:
 1. Update `OWNER_ALLOWED_EMAIL` in `.env.local` (local) and in Vercel (preview + production).
-2. Run `ALTER DATABASE postgres SET app.owner_email = 'new@email.com';` in the Supabase SQL Editor for each project (dev and prod).
+2. Run `UPDATE public.app_config SET value = 'new@email.com' WHERE key = 'owner_email';` in the Supabase SQL Editor for each project (dev and prod).
 
 The sign-in flow uses Supabase Auth magic links. When you enter your email and click "Send magic link", a one-time link is emailed to you. Clicking it exchanges the code for a session and redirects to `/dashboard`. Sessions expire after 30 days of inactivity.
 

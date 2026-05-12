@@ -7,7 +7,7 @@ The ref is the alphanumeric string in the Supabase dashboard URL:
 ## Dev
 
 ```
-Project ref: <fill in>
+Project ref: noybpekrlammwwiopval
 ```
 
 ```bash
@@ -18,7 +18,7 @@ npx supabase db push
 ## Prod
 
 ```
-Project ref: <fill in>
+Project ref: mxgsiegzllsbkqrhujrk
 ```
 
 ```bash
@@ -26,13 +26,13 @@ npx supabase link --project-ref <ref>
 npx supabase db push
 ```
 
-## app.owner_email
+## owner_email
 
-Both projects use `alythcott@gmail.com` — already hardcoded in the
-`20260511000000_init_profiles_squads.sql` migration. No override needed.
+Both projects use `alythcott@gmail.com` — seeded by the
+`20260511000000_init_profiles_squads.sql` migration into `public.app_config`.
 
 If the email ever changes, run this in the Supabase SQL Editor for each project:
 
 ```sql
-ALTER DATABASE postgres SET app.owner_email = 'new@email.com';
+UPDATE public.app_config SET value = 'new@email.com' WHERE key = 'owner_email';
 ```

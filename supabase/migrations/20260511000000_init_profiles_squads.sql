@@ -1,12 +1,11 @@
 -- ============================================================
 -- init_profiles_squads
--- Profiles and squads tables, RLS, and the handle_new_user
--- trigger that gates account creation to the allow-listed
--- owner email.
+-- Profiles, squads, and app_config tables; RLS; and the
+-- handle_new_user trigger that gates account creation to the
+-- allow-listed owner email stored in app_config.
 --
--- app.owner_email must be set on every database this runs on:
---   ALTER DATABASE postgres SET app.owner_email = 'alythcott@gmail.com';
--- (the local dev default is set at the end of this file)
+-- To change the allow-listed email, run in the SQL Editor:
+--   UPDATE public.app_config SET value = '<email>' WHERE key = 'owner_email';
 -- ============================================================
 
 
@@ -16,6 +15,23 @@
 --           ALTER TYPE public.profiles_role ADD VALUE 'viewer';
 -- ------------------------------------------------------------
 CREATE TYPE public.profiles_role AS ENUM ('owner');
+
+
+-- ------------------------------------------------------------
+-- app_config
+-- Holds server-side configuration that must not be readable by
+-- authenticated clients. No RLS policies — only SECURITY DEFINER
+-- functions (e.g. handle_new_user) can read rows from this table.
+-- ------------------------------------------------------------
+CREATE TABLE public.app_config (
+  key   text PRIMARY KEY,
+  value text NOT NULL
+);
+
+ALTER TABLE public.app_config ENABLE ROW LEVEL SECURITY;
+
+INSERT INTO public.app_config (key, value)
+VALUES ('owner_email', 'alythcott@gmail.com');
 
 
 -- ------------------------------------------------------------
@@ -93,17 +109,14 @@ CREATE POLICY squads_owner_all
 -- handle_new_user
 --
 -- Fires AFTER INSERT on auth.users.
---   • NEW.email matches app.owner_email  → creates a profiles row.
---   • No match (or setting absent)       → raises exception,
+--   • NEW.email matches app_config owner_email  → creates a profiles row.
+--   • No match (or config row absent)            → raises exception,
 --     rolling back the auth.users INSERT entirely.
 --
 -- Defence-in-depth: the signInWithEmail server action already
 -- rejects unauthorised emails before they reach Supabase Auth.
 -- This trigger ensures no account can be created even if the
 -- app layer is bypassed.
---
--- Required per database:
---   ALTER DATABASE postgres SET app.owner_email = 'alythcott@gmail.com';
 -- ------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -115,10 +128,11 @@ AS $$
 DECLARE
   owner_email text;
 BEGIN
-  -- true = return NULL instead of raising if the setting is absent
-  owner_email := current_setting('app.owner_email', true);
+  SELECT value INTO owner_email
+  FROM public.app_config
+  WHERE key = 'owner_email';
 
-  -- Fail closed: absent setting or mismatched email blocks the INSERT.
+  -- Fail closed: absent config row or mismatched email blocks the INSERT.
   IF owner_email IS NULL OR NEW.email IS DISTINCT FROM owner_email THEN
     RAISE EXCEPTION 'Email not authorised';
   END IF;
@@ -133,13 +147,3 @@ $$;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
-
--- ------------------------------------------------------------
--- Local development default (alythcott@gmail.com is the
--- allow-listed email for BOTH dev and prod; no override needed).
---
--- To change it on any environment, run in the Supabase SQL Editor:
---   ALTER DATABASE postgres SET app.owner_email = '<email>';
--- ------------------------------------------------------------
-ALTER DATABASE postgres SET app.owner_email = 'alythcott@gmail.com';
