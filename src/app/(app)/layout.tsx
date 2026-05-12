@@ -25,9 +25,9 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-screen">
-      <header className="flex items-center justify-between border-b border-black/10 px-6 py-3">
+      <header className="flex items-center justify-between border-b border-black/10 bg-white px-6 py-4">
         <div className="flex items-center gap-6">
-          <a href="/dashboard" className="hover:opacity-75 transition-opacity">
+          <a href="/dashboard" className="flex items-center gap-3 hover:opacity-75 transition-opacity">
             <Image
               src="/kickstart-logo.png"
               alt="Kickstart Football Club Barbados"
@@ -35,6 +35,9 @@ export default async function AppLayout({
               height={48}
               priority
             />
+            <span className="hidden sm:inline text-2xl font-bold tracking-tight uppercase">
+              Kickstart Rush
+            </span>
           </a>
           <nav className="flex items-center gap-4 text-sm text-zinc-600">
             <a href="/fixtures" className="hover:text-foreground transition-colors">
