@@ -34,6 +34,7 @@ export default async function AppLayout({
               width={140}
               height={74}
               priority
+              unoptimized
             />
           </a>
           <nav className="flex items-center gap-4 text-sm">
