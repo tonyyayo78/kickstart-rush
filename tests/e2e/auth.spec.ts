@@ -13,12 +13,13 @@ test.describe("Auth", () => {
     expect(text).toContain("Standings");
   });
 
-  test("submitting an unauthorised email shows generic message", async ({ page }) => {
+  test("submitting wrong credentials shows generic message", async ({ page }) => {
     await page.goto("/sign-in");
     await page.getByLabel("Email address").fill("notallowed@example.com");
-    await page.getByRole("button", { name: "Send magic link" }).click();
+    await page.getByLabel("Password").fill("wrongpassword");
+    await page.getByRole("button", { name: "Sign in" }).click();
     await expect(
-      page.getByText("If your email is allow-listed, a sign-in link has been sent."),
+      page.getByText("Invalid email or password."),
     ).toBeVisible();
   });
 });

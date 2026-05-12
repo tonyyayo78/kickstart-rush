@@ -6,10 +6,12 @@ import { z } from "zod";
 import { createServerClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 
-const emailSchema = z.string().email();
+const credentialsSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8).max(128),
+});
 
-const GENERIC_MESSAGE =
-  "If your email is allow-listed, a sign-in link has been sent.";
+const GENERIC_MESSAGE = "Invalid email or password.";
 
 // Hash both strings to equal-length buffers before comparing so
 // timingSafeEqual never leaks information via buffer-length mismatch.
@@ -20,31 +22,34 @@ function safeEmailEqual(a: string, b: string): boolean {
 
 export type SignInState = { message: string } | null;
 
-export async function signInWithEmail(
+export async function signIn(
   _prev: SignInState,
   formData: FormData,
 ): Promise<SignInState> {
-  const parsed = emailSchema.safeParse(formData.get("email"));
+  const parsed = credentialsSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+
   if (!parsed.success) {
-    return { message: "Please enter a valid email address." };
+    return { message: GENERIC_MESSAGE };
   }
 
-  const email = parsed.data;
+  const { email, password } = parsed.data;
 
   if (!safeEmailEqual(email.toLowerCase(), env.OWNER_ALLOWED_EMAIL.toLowerCase())) {
     return { message: GENERIC_MESSAGE };
   }
 
   const supabase = await createServerClient();
-  await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: `${env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/auth/callback`,
-    },
-  });
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-  // Always return the same message — never reveal OTP success or failure.
-  return { message: GENERIC_MESSAGE };
+  if (error) {
+    return { message: GENERIC_MESSAGE };
+  }
+
+  revalidatePath("/");
+  redirect("/dashboard");
 }
 
 export async function signOut(): Promise<never> {
