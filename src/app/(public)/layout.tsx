@@ -22,6 +22,7 @@ export default function PublicLayout({
               width={160}
               height={84}
               priority
+              unoptimized
             />
           </Link>
           <div className="flex items-center gap-4 sm:gap-6">
