@@ -15,15 +15,16 @@ export default function PublicLayout({
     <div className="min-h-screen">
       <header className="border-b border-zinc-200 bg-white px-4 py-3 md:px-6">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
-          <Link href="/public/fixtures" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <Link href="/public/fixtures" className="flex min-w-0 items-center gap-3 hover:opacity-80 transition-opacity">
             <Image
               src="/kickstart-logo.png"
               alt="Kickstart Football Club Barbados"
               width={56}
               height={56}
               priority
+              className="shrink-0"
             />
-            <span className="hidden sm:inline text-2xl font-black tracking-tight uppercase">
+            <span className="hidden sm:inline text-2xl font-black tracking-tight uppercase whitespace-nowrap">
               Kickstart Rush
             </span>
           </Link>
