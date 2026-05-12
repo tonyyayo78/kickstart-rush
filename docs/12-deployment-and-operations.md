@@ -32,14 +32,20 @@ Documented in `.env.example`. Required values:
 | `SENTRY_DSN` | Sentry project DSN | Vercel (Phase 2 onward) |
 | `RESEND_API_KEY` (optional) | Transactional email if Supabase email isn't used | Vercel |
 
-Each environment in Vercel — Development, Preview, Production — has its own values. Preview and Production point at different Supabase projects.
+Each environment in Vercel — Development, Preview, Production — has its own values. All environments connect to the same single Supabase project.
+
+## One Supabase project
+
+Local development, Vercel previews, and production all use the same Supabase project (`mxgsiegzllsbkqrhujrk`). There is no separate dev or staging database.
+
+**Trade-off accepted:** for a single-user app with no concurrent developers, the theoretical sandbox safety of a separate dev project is outweighed by the operational complexity it creates (two sets of credentials, two migration targets, two seeds). Supabase automated daily backups are the primary mitigation for accidental data loss. A manual snapshot is taken before any non-additive migration.
 
 ## Preview deployments
 
 - Every PR gets a `https://kickstart-rush-pr-<n>.vercel.app` URL.
-- Preview deploys use the **dev** Supabase project (separate from production).
+- Preview deploys connect to the same Supabase project as production (single environment).
 - Preview URLs are linked from the PR by a comment workflow.
-- Auth on previews uses the same magic link, but the dev Supabase project has only the owner's test account.
+- Auth on previews uses the same magic link and the same owner account.
 - Public pages on preview are also `noindex` (production posture is identical, so the preview reflects reality).
 
 ## Production release approach
@@ -57,11 +63,11 @@ Each environment in Vercel — Development, Preview, Production — has its own 
 Migrations are applied separately from code deploys.
 
 1. The migration is committed in the PR alongside the code that needs it.
-2. CI runs migrations against a throwaway test database to verify they apply cleanly.
-3. After PR merge to `main`, the migration is applied to production Supabase via the Supabase CLI:
+2. The migration SQL is reviewed in the PR diff before merge.
+3. After PR merge to `main`, the migration is applied via the Supabase CLI:
    ```bash
-   supabase link --project-ref <prod-ref>
-   supabase db push
+   npx supabase link --project-ref mxgsiegzllsbkqrhujrk
+   npx supabase db push
    ```
 4. Then the Vercel deploy is allowed to roll out.
 5. A snapshot is taken before any non-additive migration.

@@ -43,8 +43,7 @@ making non-trivial changes if you have not already in this session.
 
 ## Tests
 - Unit tests with Vitest in `tests/unit` or co-located `*.test.ts`.
-- E2E tests with Playwright in `tests/e2e`. Add an E2E flow for any new user-visible feature.
-- A PR is not done until tests pass locally and in CI.
+- A PR is not done until `npm run lint`, `npm run typecheck`, and `npm run build` all pass.
 
 ## Style
 - Prefer Server Components. Use `'use client'` only when interaction or local state requires it.

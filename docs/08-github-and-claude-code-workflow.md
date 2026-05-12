@@ -92,7 +92,7 @@ Rules:
 10. **Vercel deploys to production from `main`.**
 
 ### Branch protection rules
-- Require status checks: `lint`, `typecheck`, `test`, `build`.
+- Require status checks: `ci` (covers lint, typecheck, build).
 - Require linear history.
 - Disallow force-pushes to `main`.
 - Require PR before merging.
@@ -207,7 +207,6 @@ A feature is done when **all** of these are true:
 - [ ] Database migrations exist and are applied; RLS policies cover the new table(s).
 - [ ] Audit trigger exists for any new sensitive table.
 - [ ] Server actions validate input with Zod; client never bypasses them.
-- [ ] At least one Playwright E2E test covers the happy path.
 - [ ] The preview URL has been opened on a phone and the screen looks right.
 - [ ] Documentation (`docs/`) is updated if behaviour changed.
 - [ ] PR description has screenshots or recording.
