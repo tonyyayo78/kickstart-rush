@@ -5,13 +5,29 @@ A fantasy football platform for managing fixtures, results, standings, and playe
 ## Getting started
 
 ```bash
+cp .env.example .env.local
+```
+
+Open `.env.local` and fill in the values from the **kickstart-rush-dev** Supabase project dashboard.
+
+```bash
 npm install
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-Copy `.env.example` to `.env.local` and fill in the required values before running locally with a connected backend.
+To verify the Supabase connection is working, visit:
+
+```
+http://localhost:3000/api/health
+```
+
+Expected response (before schema migrations are applied):
+
+```json
+{ "ok": true, "supabase": "reachable", "note": "expected: schema not deployed" }
+```
 
 ## Documentation
 
