@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { createResult, updateResult, deleteResult } from "@/features/results/actions";
@@ -18,6 +19,7 @@ type TeamInfo = {
   id: string;
   team_name: string;
   squad_id: string | null;
+  is_kickstart: boolean;
 };
 
 type FixtureRow = {
@@ -56,8 +58,8 @@ export default async function ResultPage({
     .from("fixtures")
     .select(
       `id, kickoff_at, venue, status,
-       home_team:home_team_id(id, team_name, squad_id),
-       away_team:away_team_id(id, team_name, squad_id)`,
+       home_team:home_team_id(id, team_name, squad_id, is_kickstart),
+       away_team:away_team_id(id, team_name, squad_id, is_kickstart)`,
     )
     .eq("id", id)
     .single();
@@ -130,11 +132,23 @@ export default async function ResultPage({
     ? deleteResult.bind(null, existingResult.id, id)
     : null;
 
+  const isKickstart = fixture.home_team.is_kickstart || fixture.away_team.is_kickstart;
+
   return (
     <div className="max-w-2xl">
-      <div className="mb-1 text-xs text-zinc-400">
-        {FMT.format(new Date(fixture.kickoff_at))}
-        {fixture.venue ? ` · ${fixture.venue}` : ""}
+      <div className="mb-1 flex items-center justify-between">
+        <span className="text-xs text-zinc-400">
+          {FMT.format(new Date(fixture.kickoff_at))}
+          {fixture.venue ? ` · ${fixture.venue}` : ""}
+        </span>
+        {isKickstart && (
+          <Link
+            href={`/fixtures/${id}/fees`}
+            className="text-xs font-medium text-[#00267F] hover:underline"
+          >
+            View match fees →
+          </Link>
+        )}
       </div>
       <h1 className="mb-6 text-xl font-semibold">
         {homeTeam.team_name} vs {awayTeam.team_name}
