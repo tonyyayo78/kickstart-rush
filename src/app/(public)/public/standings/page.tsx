@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createAnonPublicClient } from "@/lib/supabase/anon-public";
+import FormPills from "@/components/FormPills";
 
 const BARBADOS_TZ = "America/Barbados";
 
@@ -16,6 +17,7 @@ type StandingRow = {
   goals_against: number;
   goal_difference: number;
   points: number;
+  form: string[];
 };
 
 type UpcomingFixture = {
@@ -84,7 +86,6 @@ export default async function PublicStandingsPage() {
     competitions.get(row.competition_code)!.rows.push(row);
   }
 
-  // Group upcoming fixtures by local date
   const upcomingGroups = new Map<string, UpcomingFixture[]>();
   for (const f of upcomingRaw ?? []) {
     const key = localDateKey(f.kickoff_at);
@@ -94,7 +95,7 @@ export default async function PublicStandingsPage() {
 
   return (
     <div>
-      {/* Hero band — breaks out of the layout's p-6 padding */}
+      {/* Hero band */}
       <div className="-mx-6 -mt-6 mb-8 bg-[#00267F] px-6 py-6 text-white md:py-8">
         <div className="mx-auto max-w-4xl">
           <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
@@ -114,7 +115,6 @@ export default async function PublicStandingsPage() {
             Next Matches
           </h2>
           <div className="mt-2 mb-4 h-1 w-12 bg-[#FFC726]" />
-
           <div className="flex flex-col gap-4">
             {[...upcomingGroups.entries()].map(([dateKey, fixtures]) => (
               <div key={dateKey}>
@@ -131,23 +131,11 @@ export default async function PublicStandingsPage() {
                         {formatTime(f.kickoff_at)}
                       </span>
                       <div className="min-w-0 flex-1 text-sm">
-                        <span
-                          className={
-                            f.home_is_kickstart
-                              ? "font-bold text-[#00267F]"
-                              : "font-medium"
-                          }
-                        >
+                        <span className={f.home_is_kickstart ? "font-bold text-[#00267F]" : "font-medium"}>
                           {f.home_team_name}
                         </span>
                         <span className="mx-1.5 text-zinc-400">vs</span>
-                        <span
-                          className={
-                            f.away_is_kickstart
-                              ? "font-bold text-[#00267F]"
-                              : "font-medium"
-                          }
-                        >
+                        <span className={f.away_is_kickstart ? "font-bold text-[#00267F]" : "font-medium"}>
                           {f.away_team_name}
                         </span>
                         {f.venue && (
@@ -162,7 +150,6 @@ export default async function PublicStandingsPage() {
               </div>
             ))}
           </div>
-
           <Link
             href="/public/fixtures"
             className="mt-4 inline-block text-sm font-medium text-[#00267F] hover:underline"
@@ -182,10 +169,10 @@ export default async function PublicStandingsPage() {
             {comp.name}
           </h2>
           <div className="overflow-x-auto rounded-lg border border-zinc-200">
-            <table className="w-full min-w-[520px] text-sm">
+            <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="bg-zinc-100 text-left text-xs font-bold uppercase tracking-wide text-zinc-600">
-                  <th className="px-4 py-3 w-8">Pos</th>
+                  <th className="w-8 px-4 py-3">Pos</th>
                   <th className="px-4 py-3">Team</th>
                   <th className="px-4 py-3 text-center">P</th>
                   <th className="px-4 py-3 text-center">W</th>
@@ -195,35 +182,55 @@ export default async function PublicStandingsPage() {
                   <th className="px-4 py-3 text-center">GA</th>
                   <th className="px-4 py-3 text-center">GD</th>
                   <th className="px-4 py-3 text-center">Pts</th>
+                  <th className="px-4 py-3">Form</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
                 {comp.rows.map((row, idx) => (
-                  <tr
-                    key={row.team_name}
-                    className={`transition-colors hover:bg-zinc-50 ${row.is_kickstart ? "bg-[#EEF2FF]" : ""}`}
-                  >
-                    <td className="px-4 py-3 text-zinc-400 tabular-nums">
-                      {idx === 0 ? "★" : idx + 1}
-                    </td>
-                    <td
-                      className={`px-4 py-3 ${
-                        row.is_kickstart ? "font-bold text-[#00267F]" : ""
-                      }`}
+                  <>
+                    {/* Qualification divider between 4th and 5th place */}
+                    {idx === 4 && comp.rows.length > 4 && (
+                      <tr key="qualification-divider" aria-hidden="true">
+                        <td colSpan={11} className="px-4 py-0">
+                          <div className="py-1">
+                            <p className="mb-1 text-right text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                              Super 8 qualification
+                            </p>
+                            <div className="border-t border-zinc-300" />
+                            <p className="mt-1 text-right text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                              Plate
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    <tr
+                      key={row.team_name}
+                      className={`transition-colors hover:bg-zinc-50 ${row.is_kickstart ? "bg-[#EEF2FF]" : ""}`}
                     >
-                      {row.team_name}
-                    </td>
-                    <td className="px-4 py-3 text-center tabular-nums">{row.played}</td>
-                    <td className="px-4 py-3 text-center tabular-nums">{row.won}</td>
-                    <td className="px-4 py-3 text-center tabular-nums">{row.drawn}</td>
-                    <td className="px-4 py-3 text-center tabular-nums">{row.lost}</td>
-                    <td className="px-4 py-3 text-center tabular-nums">{row.goals_for}</td>
-                    <td className="px-4 py-3 text-center tabular-nums">{row.goals_against}</td>
-                    <td className="px-4 py-3 text-center tabular-nums">{row.goal_difference}</td>
-                    <td className="px-4 py-3 text-center font-black tabular-nums text-[#FFC726]">
-                      {row.points}
-                    </td>
-                  </tr>
+                      <td className="px-4 py-3 tabular-nums text-zinc-400">
+                        {idx === 0 ? "★" : idx + 1}
+                      </td>
+                      <td
+                        className={`px-4 py-3 ${row.is_kickstart ? "font-bold text-[#00267F]" : ""}`}
+                      >
+                        {row.team_name}
+                      </td>
+                      <td className="px-4 py-3 text-center tabular-nums">{row.played}</td>
+                      <td className="px-4 py-3 text-center tabular-nums">{row.won}</td>
+                      <td className="px-4 py-3 text-center tabular-nums">{row.drawn}</td>
+                      <td className="px-4 py-3 text-center tabular-nums">{row.lost}</td>
+                      <td className="px-4 py-3 text-center tabular-nums">{row.goals_for}</td>
+                      <td className="px-4 py-3 text-center tabular-nums">{row.goals_against}</td>
+                      <td className="px-4 py-3 text-center tabular-nums">{row.goal_difference}</td>
+                      <td className="px-4 py-3 text-center font-black tabular-nums text-[#FFC726]">
+                        {row.points}
+                      </td>
+                      <td className="px-4 py-3">
+                        <FormPills form={row.form} />
+                      </td>
+                    </tr>
+                  </>
                 ))}
               </tbody>
             </table>
