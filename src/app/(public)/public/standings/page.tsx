@@ -36,9 +36,9 @@ export default async function PublicStandingsPage() {
   return (
     <div>
       {/* Hero band — breaks out of the layout's p-6 padding */}
-      <div className="-mx-6 -mt-6 mb-8 bg-blue-600 px-6 py-8 text-white md:py-12">
+      <div className="-mx-6 -mt-6 mb-8 bg-blue-600 px-6 py-6 text-white md:py-8">
         <div className="mx-auto max-w-4xl">
-          <h1 className="text-4xl font-black uppercase tracking-tight md:text-5xl">
+          <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
             BFA U15 Qualifiers 2026
           </h1>
           <p className="mt-3 text-blue-100">
