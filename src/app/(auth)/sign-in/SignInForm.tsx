@@ -1,10 +1,10 @@
 "use client";
 import { useActionState } from "react";
-import { signInWithEmail, type SignInState } from "@/features/auth/actions";
+import { signIn, type SignInState } from "@/features/auth/actions";
 
 export default function SignInForm() {
   const [state, formAction, pending] = useActionState<SignInState, FormData>(
-    signInWithEmail,
+    signIn,
     null,
   );
 
@@ -23,15 +23,28 @@ export default function SignInForm() {
           className="rounded-md border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/20"
         />
       </div>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="password" className="text-sm font-medium">
+          Password
+        </label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          required
+          autoComplete="current-password"
+          className="rounded-md border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/20"
+        />
+      </div>
       <button
         type="submit"
         disabled={pending}
         className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity disabled:opacity-50"
       >
-        {pending ? "Sending…" : "Send magic link"}
+        {pending ? "Signing in…" : "Sign in"}
       </button>
       {state?.message && (
-        <p role="status" className="text-sm text-zinc-600">
+        <p role="status" className="text-sm text-red-600">
           {state.message}
         </p>
       )}
