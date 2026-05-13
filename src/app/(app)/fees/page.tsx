@@ -34,7 +34,6 @@ type FixtureRow = {
   id: string;
   kickoff_at: string;
   venue: string | null;
-  status: string;
   home_team: TeamInfo;
   away_team: TeamInfo;
 };
@@ -58,7 +57,7 @@ export default async function FeesPage() {
     supabase
       .from("fixtures")
       .select(
-        "id, kickoff_at, venue, status, home_team:home_team_id(team_name, is_kickstart), away_team:away_team_id(team_name, is_kickstart)",
+        "id, kickoff_at, venue, home_team:home_team_id(team_name, is_kickstart), away_team:away_team_id(team_name, is_kickstart)",
       )
       .order("kickoff_at", { ascending: true }),
     supabase
@@ -152,17 +151,12 @@ export default async function FeesPage() {
             ? f.away_team
             : f.home_team;
           const isHome = f.home_team.is_kickstart;
-          const isPast = f.status === "played";
           const hasActivity = fees != null;
 
           return (
             <div
               key={f.id}
-              className={`flex flex-col gap-3 rounded-lg border px-4 py-3 sm:flex-row sm:items-center ${
-                isPast
-                  ? "border-zinc-200 bg-white"
-                  : "border-[#C7D3F5] bg-[#EEF2FF]"
-              }`}
+              className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 sm:flex-row sm:items-center"
             >
               {/* Date + time */}
               <div className="w-28 shrink-0">
