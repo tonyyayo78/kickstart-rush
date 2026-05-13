@@ -42,6 +42,7 @@ type FixtureRow = {
   home_team: Team;
   away_team: Team;
   results: ResultScore[] | null;
+  lineups: { id: string }[] | null;
 };
 
 export default async function FixturesPage() {
@@ -50,7 +51,7 @@ export default async function FixturesPage() {
   const { data: fixturesRaw } = await supabase
     .from("fixtures")
     .select(
-      "id, kickoff_at, venue, status, home_team:home_team_id(team_name, is_kickstart), away_team:away_team_id(team_name, is_kickstart), results!fixture_id(home_score, away_score)",
+      "id, kickoff_at, venue, status, home_team:home_team_id(team_name, is_kickstart), away_team:away_team_id(team_name, is_kickstart), results!fixture_id(home_score, away_score), lineups!fixture_id(id)",
     )
     .order("kickoff_at", { ascending: true });
 
@@ -85,6 +86,7 @@ export default async function FixturesPage() {
                 f.home_team.is_kickstart || f.away_team.is_kickstart;
               const score = f.results?.[0] ?? null;
               const isPlayed = f.status === "played" && score !== null;
+              const hasLineup = (f.lineups?.length ?? 0) > 0;
 
               return (
                 <li
@@ -143,6 +145,14 @@ export default async function FixturesPage() {
                         <span className="hidden text-xs text-zinc-400 sm:block">
                           {f.venue}
                         </span>
+                      )}
+                      {isKickstart && (
+                        <Link
+                          href={`/fixtures/${f.id}/lineup`}
+                          className="rounded border border-zinc-300 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-zinc-600 transition-colors hover:border-[#00267F] hover:text-[#00267F]"
+                        >
+                          {hasLineup ? "Lineup ✓" : "Lineup"}
+                        </Link>
                       )}
                       {isKickstart && (
                         <Link
