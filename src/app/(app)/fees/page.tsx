@@ -104,7 +104,7 @@ export default async function FeesPage() {
   return (
     <div className="max-w-3xl">
       <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
-        Match Fees
+        Fees Overview
       </h1>
       <div className="mt-2 mb-3 h-1 w-16 bg-[#FFC726]" />
       <p className="mb-6 text-sm text-zinc-500">Record who paid match fees</p>
