@@ -42,6 +42,9 @@ export default async function AppLayout({
             <a href="/fixtures" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
               Fixtures
             </a>
+            <a href="/fees" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
+              Fees
+            </a>
             <a href="/standings" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
               Standings
             </a>
