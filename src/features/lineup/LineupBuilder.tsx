@@ -39,6 +39,26 @@ function lastName(p: Player): string {
   return p.display_name.split(". ")[1] ?? p.display_name;
 }
 
+// SVG animation / interaction styles — scoped with lbp- prefix to avoid
+// colliding with any global CSS that might share the same class names.
+const SVG_STYLES = `
+  .lbp-chip-enter {
+    animation: lbp-chip-enter 150ms ease-out both;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  @keyframes lbp-chip-enter {
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1);    }
+  }
+  .lbp-slot-btn {
+    transition: transform 80ms ease-out;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .lbp-slot-btn:active { transform: scale(0.95); }
+`;
+
 export default function LineupBuilder({
   fixtureId,
   players,
@@ -69,6 +89,11 @@ export default function LineupBuilder({
   });
 
   const [sheet, setSheet] = useState<SheetState>({ mode: "closed" });
+  // sheetVisible keeps the DOM node alive during the slide-out transition.
+  // sheetIn drives the CSS translate — toggled in event handlers, not effects.
+  const [sheetVisible, setSheetVisible] = useState(false);
+  const [sheetIn, setSheetIn] = useState(false);
+
   const [isPending, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [flashSaved, setFlashSaved] = useState(false);
@@ -77,6 +102,7 @@ export default function LineupBuilder({
   const playerById = new Map(players.map((p) => [p.id, p]));
   const assignedIds = new Set([...starters.values(), ...subs.values()]);
 
+  // Scroll lock while sheet is open
   useEffect(() => {
     if (sheet.mode !== "closed") {
       document.body.style.overflow = "hidden";
@@ -87,6 +113,24 @@ export default function LineupBuilder({
       document.body.style.overflow = "";
     };
   }, [sheet.mode]);
+
+  // Open / close the bottom sheet with slide animation.
+  // All setState is in event handlers (not effects) to satisfy react-hooks/set-state-in-effect.
+  const openSheet = (next: Exclude<SheetState, { mode: "closed" }>) => {
+    setSheet(next);
+    setSheetVisible(true);
+    // One rAF so the browser paints translate-y-full before transitioning to 0
+    requestAnimationFrame(() => setSheetIn(true));
+  };
+
+  const closeSheet = () => {
+    setSheetIn(false);
+    // Keep the DOM node until the slide-out transition finishes
+    setTimeout(() => {
+      setSheetVisible(false);
+      setSheet({ mode: "closed" });
+    }, 210);
+  };
 
   const handleFormationChange = (id: FormationId) => {
     setFormation(id);
@@ -135,14 +179,12 @@ export default function LineupBuilder({
 
   const handleSlotTap = (role: "starter" | "sub", slotOrder: number) => {
     const map = role === "starter" ? starters : subs;
-    setSheet(
+    openSheet(
       map.has(slotOrder)
         ? { mode: "action", role, slotOrder }
         : { mode: "place", role, slotOrder },
     );
   };
-
-  const closeSheet = () => setSheet({ mode: "closed" });
 
   const handleSave = () => {
     startTransition(async () => {
@@ -214,7 +256,7 @@ export default function LineupBuilder({
         <div className="flex flex-col gap-2">
           <button
             type="button"
-            onClick={() => setSheet({ mode: "place", role, slotOrder })}
+            onClick={() => openSheet({ mode: "place", role, slotOrder })}
             className="rounded-lg border border-zinc-200 px-4 py-3.5 text-left text-sm font-medium text-zinc-800 hover:border-[#00267F] hover:text-[#00267F]"
           >
             Change player
@@ -328,20 +370,86 @@ export default function LineupBuilder({
       {/* Pitch + bench */}
       <div>
         {/* Pitch SVG */}
-        <div className="mx-auto w-full max-w-[340px]">
+        <div className="mx-auto w-full max-w-[340px] drop-shadow-2xl">
           <svg
             viewBox="0 0 300 450"
-            className="w-full rounded-xl shadow-md"
+            className="w-full rounded-xl"
             aria-label="Football pitch — tap a slot to assign a player"
           >
-            {/* Background */}
-            <rect width="300" height="450" fill="#2D7A3A" rx="8" />
+            <defs>
+              {/* Pitch vertical gradient: deeper green at attack end */}
+              <linearGradient id="pitch-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor="#1F6B2E" />
+                <stop offset="100%" stopColor="#338C44" />
+              </linearGradient>
 
-            {/* Field markings */}
+              {/* Mowed grass stripes: 9 × 50px bands, alternating transparent/6% white */}
+              <pattern
+                id="grass-stripes"
+                x="0" y="0"
+                width="300" height="50"
+                patternUnits="userSpaceOnUse"
+              >
+                <rect x="0" y="0"  width="300" height="25" fill="transparent" />
+                <rect x="0" y="25" width="300" height="25" fill="rgba(255,255,255,0.06)" />
+              </pattern>
+
+              {/* Inner vignette: transparent centre → 18% black at corners */}
+              <radialGradient id="vignette" cx="50%" cy="50%" r="70%">
+                <stop offset="0%"   stopColor="black" stopOpacity="0"    />
+                <stop offset="100%" stopColor="black" stopOpacity="0.18" />
+              </radialGradient>
+
+              {/* Field markings white glow: blur copy merged under sharp original */}
+              <filter id="line-glow" x="-8%" y="-8%" width="116%" height="116%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+
+              {/* Chip radial gradient: lit-from-top-left → deep Barbados blue */}
+              <radialGradient id="chip-fill" cx="38%" cy="30%" r="65%">
+                <stop offset="0%"   stopColor="#4A6ECC" />
+                <stop offset="55%"  stopColor="#00267F" />
+                <stop offset="100%" stopColor="#001650" />
+              </radialGradient>
+
+              {/* Filled chip drop shadow */}
+              <filter id="chip-shadow" x="-30%" y="-30%" width="160%" height="160%">
+                <feDropShadow
+                  dx="0" dy="2.5" stdDeviation="3.5"
+                  floodColor="#000000" floodOpacity="0.35"
+                />
+              </filter>
+
+              {/* Empty slot lighter shadow */}
+              <filter id="slot-shadow" x="-30%" y="-30%" width="160%" height="160%">
+                <feDropShadow
+                  dx="0" dy="1.5" stdDeviation="2"
+                  floodColor="#000000" floodOpacity="0.2"
+                />
+              </filter>
+
+              {/* CSS animations scoped with lbp- prefix */}
+              <style>{SVG_STYLES}</style>
+            </defs>
+
+            {/* ── Pitch layers ── */}
+            {/* 1. Base gradient */}
+            <rect width="300" height="450" fill="url(#pitch-grad)" rx="8" />
+            {/* 2. Grass stripes */}
+            <rect width="300" height="450" fill="url(#grass-stripes)" rx="8" />
+            {/* 3. Vignette */}
+            <rect width="300" height="450" fill="url(#vignette)" rx="8" />
+
+            {/* ── Field markings ── */}
             <g
-              stroke="rgba(255,255,255,0.5)"
+              stroke="rgba(255,255,255,0.85)"
               strokeWidth="1.5"
               fill="none"
+              filter="url(#line-glow)"
             >
               <rect x="12" y="12" width="276" height="426" />
               <line x1="12" y1="225" x2="288" y2="225" />
@@ -353,11 +461,11 @@ export default function LineupBuilder({
               <rect x="68" y="12" width="164" height="66" />
               <rect x="108" y="12" width="84" height="20" />
             </g>
-            <circle cx="150" cy="225" r="2.5" fill="rgba(255,255,255,0.5)" />
-            <circle cx="150" cy="398" r="2.5" fill="rgba(255,255,255,0.5)" />
-            <circle cx="150" cy="52" r="2.5" fill="rgba(255,255,255,0.5)" />
+            <circle cx="150" cy="225" r="2.5" fill="rgba(255,255,255,0.85)" />
+            <circle cx="150" cy="398" r="2.5" fill="rgba(255,255,255,0.85)" />
+            <circle cx="150" cy="52"  r="2.5" fill="rgba(255,255,255,0.85)" />
 
-            {/* Starter slots */}
+            {/* ── Starter slots ── */}
             {currentFormation.slots.map((slot) => {
               const pid = starters.get(slot.slotOrder) ?? null;
               const p = pid ? playerById.get(pid) : undefined;
@@ -370,8 +478,10 @@ export default function LineupBuilder({
               const subLabel = filled ? lastName(p).slice(0, 6) : null;
 
               return (
+                // Key includes pid so a new assignment remounts the chip,
+                // re-triggering the chip-enter animation.
                 <g
-                  key={slot.slotOrder}
+                  key={filled ? `${slot.slotOrder}-${pid}` : `${slot.slotOrder}`}
                   onClick={() => handleSlotTap("starter", slot.slotOrder)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
@@ -382,22 +492,38 @@ export default function LineupBuilder({
                   tabIndex={0}
                   role="button"
                   aria-label={`${slot.label}: ${p?.display_name ?? "Empty — tap to assign"}`}
-                  className="cursor-pointer outline-none"
+                  className={`cursor-pointer outline-none lbp-slot-btn ${filled ? "lbp-chip-enter" : ""}`}
                 >
-                  {/* Invisible larger hit target */}
+                  {/* Invisible enlarged hit target */}
                   <circle cx={slot.x} cy={slot.y} r={26} fill="transparent" />
+
+                  {/* Chip circle */}
                   <circle
                     cx={slot.x}
                     cy={slot.y}
                     r={19}
-                    fill={filled ? "#00267F" : "rgba(255,255,255,0.18)"}
-                    stroke={filled ? "white" : "rgba(255,255,255,0.65)"}
-                    strokeWidth={filled ? 2 : 1.5}
+                    fill={filled ? "url(#chip-fill)" : "rgba(255,255,255,0.18)"}
+                    stroke="white"
+                    strokeWidth={filled ? 2.5 : 1.5}
                     strokeDasharray={filled ? undefined : "4 3"}
+                    filter={filled ? "url(#chip-shadow)" : "url(#slot-shadow)"}
                   />
+
+                  {/* Glossy inner highlight arc (filled chips only) */}
+                  {filled && (
+                    <ellipse
+                      cx={slot.x}
+                      cy={slot.y - 10}
+                      rx={9}
+                      ry={4.5}
+                      fill="rgba(255,255,255,0.22)"
+                    />
+                  )}
+
+                  {/* Primary label */}
                   <text
                     x={slot.x}
-                    y={subLabel ? slot.y - 4 : slot.y}
+                    y={subLabel ? slot.y - 3 : slot.y}
                     textAnchor="middle"
                     dominantBaseline="middle"
                     fill="white"
@@ -407,10 +533,12 @@ export default function LineupBuilder({
                   >
                     {mainLabel}
                   </text>
+
+                  {/* Sub-label: surname truncated */}
                   {subLabel && (
                     <text
                       x={slot.x}
-                      y={slot.y + 6}
+                      y={slot.y + 7}
                       textAnchor="middle"
                       dominantBaseline="middle"
                       fill="rgba(255,255,255,0.85)"
@@ -438,13 +566,13 @@ export default function LineupBuilder({
               const filled = p != null;
               return (
                 <button
-                  key={slotOrder}
+                  key={filled ? `sub-${slotOrder}-${pid}` : `sub-${slotOrder}`}
                   type="button"
                   onClick={() => handleSlotTap("sub", slotOrder)}
-                  className={`flex h-[56px] w-[56px] shrink-0 flex-col items-center justify-center rounded-full border-2 transition-colors ${
+                  className={`flex h-[56px] w-[56px] shrink-0 flex-col items-center justify-center rounded-full border-2 transition-all active:scale-95 ${
                     filled
-                      ? "border-[#00267F] bg-[#00267F] text-white"
-                      : "border-dashed border-zinc-300 bg-white text-zinc-400 hover:border-zinc-400"
+                      ? "border-[#001650] bg-gradient-to-br from-[#4A6ECC] via-[#00267F] to-[#001650] text-white shadow-lg shadow-black/30"
+                      : "border-dashed border-zinc-300 bg-white text-zinc-400 shadow-md shadow-black/10 hover:border-zinc-400"
                   }`}
                   aria-label={
                     filled
@@ -487,16 +615,16 @@ export default function LineupBuilder({
         {errorMsg && <span className="text-sm text-red-600">{errorMsg}</span>}
       </div>
 
-      {/* Bottom sheet */}
-      {sheet.mode !== "closed" && (
+      {/* Bottom sheet — animated slide-up */}
+      {sheetVisible && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/40"
+            className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-200 ${sheetIn ? "opacity-100" : "opacity-0"}`}
             onClick={closeSheet}
             aria-hidden="true"
           />
           <div
-            className="fixed inset-x-0 bottom-0 z-50 max-h-[72vh] overflow-y-auto rounded-t-2xl bg-white shadow-xl"
+            className={`fixed inset-x-0 bottom-0 z-50 max-h-[72vh] overflow-y-auto rounded-t-2xl bg-white shadow-xl transition-transform duration-200 ease-out ${sheetIn ? "translate-y-0" : "translate-y-full"}`}
             role="dialog"
             aria-modal="true"
           >
