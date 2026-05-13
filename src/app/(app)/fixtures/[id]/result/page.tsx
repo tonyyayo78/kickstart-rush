@@ -198,6 +198,18 @@ export default async function ResultPage({
             >
               View match fees →
             </Link>
+            <Link
+              href={`/fixtures/${id}/live`}
+              className="text-xs font-medium text-[#00267F] hover:underline"
+            >
+              {!fixture.match_state || fixture.match_state === "not_started"
+                ? "Start Live Match →"
+                : ["h1", "h1_stoppage", "h2", "h2_stoppage"].includes(fixture.match_state)
+                ? "Live Match (in progress) →"
+                : fixture.match_state === "halftime"
+                ? "Live Match (halftime) →"
+                : "View Match Events →"}
+            </Link>
           </div>
         )}
       </div>
