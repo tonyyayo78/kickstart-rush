@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useActionState } from "react";
 import { signIn, type SignInState } from "@/features/auth/actions";
 
@@ -48,6 +49,15 @@ export default function SignInForm() {
           {state.message}
         </p>
       )}
+      <p className="text-center text-sm text-zinc-500">
+        Don&apos;t have access?{" "}
+        <Link
+          href="/public/request-access"
+          className="text-[#00267F] underline hover:text-[#3349A3]"
+        >
+          Request it →
+        </Link>
+      </p>
     </form>
   );
 }
