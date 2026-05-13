@@ -47,6 +47,14 @@ type Goal = {
   is_own_goal: boolean;
 };
 
+type CardRow = {
+  id: string;
+  player_id: string;
+  card_type: string;
+  minute: number | null;
+  note: string | null;
+};
+
 export default async function ResultPage({
   params,
 }: {
@@ -137,7 +145,7 @@ export default async function ResultPage({
     }
   }
 
-  // Fetch existing result + goals if already played
+  // Fetch existing result + goals + cards if already played
   let existingResult: {
     id: string;
     home_score: number;
@@ -145,6 +153,7 @@ export default async function ResultPage({
     match_notes: string | null;
     goals: Goal[];
   } | null = null;
+  let existingCards: CardRow[] = [];
 
   if (fixture.status === "played") {
     const { data: result } = await supabase
@@ -160,12 +169,24 @@ export default async function ResultPage({
         .eq("result_id", result.id)
         .order("minute", { ascending: true, nullsFirst: false });
 
+      const { data: cards } = await supabase
+        .from("cards")
+        .select("id, player_id, card_type, minute, note")
+        .eq("fixture_id", id)
+        .order("minute", { ascending: true, nullsFirst: false });
+
       existingResult = { ...result, goals: (goals as Goal[]) ?? [] };
+      existingCards = (cards as CardRow[]) ?? [];
     }
   }
 
   const homeTeam = fixture.home_team;
   const awayTeam = fixture.away_team;
+  const kickstartPlayers = fixture.home_team.is_kickstart
+    ? homePlayers
+    : fixture.away_team.is_kickstart
+    ? awayPlayers
+    : [];
 
   const createBound = createResult.bind(null);
   const updateBound = existingResult
@@ -223,6 +244,8 @@ export default async function ResultPage({
         awayTeam={{ id: awayTeam.id, name: awayTeam.team_name }}
         homePlayers={homePlayers}
         awayPlayers={awayPlayers}
+        kickstartPlayers={kickstartPlayers}
+        existingCards={existingCards}
         createAction={createBound}
         updateAction={updateBound}
         existingResult={existingResult}
