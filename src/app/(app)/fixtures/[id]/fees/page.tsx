@@ -37,6 +37,7 @@ type FixtureRow = {
   id: string;
   kickoff_at: string;
   venue: string | null;
+  status: string;
   home_team: TeamInfo;
   away_team: TeamInfo;
 };
@@ -58,7 +59,7 @@ export default async function FeesPage({
   const { data: fixtureRaw } = await supabase
     .from("fixtures")
     .select(
-      `id, kickoff_at, venue,
+      `id, kickoff_at, venue, status,
        home_team:home_team_id(id, team_name, is_kickstart, squad_id),
        away_team:away_team_id(id, team_name, is_kickstart, squad_id)`,
     )
@@ -118,6 +119,9 @@ export default async function FeesPage({
   });
 
   const fixtureLine = formatFixtureLine(fixture.kickoff_at, fixture.venue);
+  const isPlayed =
+    fixture.status === "played" &&
+    new Date(fixture.kickoff_at) <= new Date();
 
   const togglePaidBound = togglePlayerPaid.bind(null);
   const toggleExceptionBound = togglePlayerException.bind(null);
@@ -129,6 +133,7 @@ export default async function FeesPage({
       fixtureLine={fixtureLine}
       kickstartTeamName={kickstartTeam.team_name}
       players={players}
+      isPlayed={isPlayed}
       togglePaidAction={togglePaidBound}
       toggleExceptionAction={toggleExceptionBound}
       updateNoteAction={updateNoteBound}
