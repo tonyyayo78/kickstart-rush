@@ -43,18 +43,6 @@ AS $$
   );
 $$;
 
--- Returns the squad list for the public request-access form without
--- granting anon SELECT on the squads table directly.
-CREATE OR REPLACE FUNCTION public.fn_public_squads()
-RETURNS TABLE(id uuid, name text, code text, age_group text)
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT id, name, code, age_group FROM public.squads ORDER BY name;
-$$;
-
 -- ── RLS policies ──────────────────────────────────────────────
 
 -- anon may INSERT into access_requests only with status = 'pending'.

@@ -9,7 +9,11 @@ export const metadata: Metadata = {
 
 export default async function RequestAccessPage() {
   const supabase = await createAnonPublicClient();
-  const { data: squads } = await supabase.rpc("fn_public_squads");
+  const { data: squads } = await supabase
+    .from("squads")
+    .select("id, name, code, age_group")
+    .order("name")
+    .returns<{ id: string; name: string; code: string; age_group: string | null }[]>();
 
   return (
     <div className="max-w-lg">
