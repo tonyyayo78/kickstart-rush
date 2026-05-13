@@ -142,12 +142,20 @@ export default async function ResultPage({
           {fixture.venue ? ` · ${fixture.venue}` : ""}
         </span>
         {isKickstart && (
-          <Link
-            href={`/fixtures/${id}/fees`}
-            className="text-xs font-medium text-[#00267F] hover:underline"
-          >
-            View match fees →
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href={`/fixtures/${id}/lineup`}
+              className="text-xs font-medium text-[#00267F] hover:underline"
+            >
+              {existingResult ? "Edit lineup →" : "Set lineup →"}
+            </Link>
+            <Link
+              href={`/fixtures/${id}/fees`}
+              className="text-xs font-medium text-[#00267F] hover:underline"
+            >
+              View match fees →
+            </Link>
+          </div>
         )}
       </div>
       <h1 className="mb-6 text-xl font-semibold">
