@@ -24,7 +24,7 @@ BEGIN
   INSERT INTO public.players (squad_id, first_name, last_name, preferred_position)
   SELECT v_squad_id, r.first_name, r.last_name, r.preferred_position
   FROM (VALUES
-    ('Aamir',   'John',       NULL::text),
+    ('Aamir',   'John',       NULL::player_position),
     ('Caleb',   'Hinds',      NULL),
     ('Brent',   'Lashley',    NULL),
     ('Quityne', 'Lowe',       NULL),
