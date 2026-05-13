@@ -15,7 +15,7 @@ export default async function EditPlayerPage({
   const { data: player } = await supabase
     .from("players")
     .select(
-      `id, first_name, last_name, preferred_position,
+      `id, squad_id, first_name, last_name, preferred_position,
        jersey_number, status, date_of_birth, notes_summary,
        squads ( name, code )`,
     )
@@ -24,6 +24,13 @@ export default async function EditPlayerPage({
     .single();
 
   if (!player) notFound();
+
+  const { data: squadPlayers } = await supabase
+    .from("players")
+    .select("id, jersey_number, first_name, last_name")
+    .eq("squad_id", player.squad_id)
+    .is("deleted_at", null)
+    .eq("status", "active");
 
   const action = updatePlayer.bind(null, id);
 
@@ -45,7 +52,8 @@ export default async function EditPlayerPage({
             | "GK"
             | "DEF"
             | "MID"
-            | "FWD",
+            | "FWD"
+            | null,
           jersey_number: player.jersey_number,
           status: player.status as
             | "active"
@@ -56,6 +64,8 @@ export default async function EditPlayerPage({
         }}
         submitLabel="Save changes"
         cancelHref={`/players/${id}`}
+        squadPlayers={squadPlayers ?? []}
+        currentPlayerId={id}
       />
     </div>
   );

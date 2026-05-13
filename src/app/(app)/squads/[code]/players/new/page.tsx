@@ -13,11 +13,18 @@ export default async function NewPlayerPage({
 
   const { data: squad } = await supabase
     .from("squads")
-    .select("name")
+    .select("id, name")
     .eq("code", code)
     .single();
 
   if (!squad) notFound();
+
+  const { data: squadPlayers } = await supabase
+    .from("players")
+    .select("id, jersey_number, first_name, last_name")
+    .eq("squad_id", squad.id)
+    .is("deleted_at", null)
+    .eq("status", "active");
 
   const action = createPlayer.bind(null, code);
 
@@ -30,6 +37,7 @@ export default async function NewPlayerPage({
         action={action}
         submitLabel="Add player"
         cancelHref={`/squads/${code}/players`}
+        squadPlayers={squadPlayers ?? []}
       />
     </div>
   );
