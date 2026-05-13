@@ -106,7 +106,8 @@ export default async function FeesPage() {
       <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
         Match Fees
       </h1>
-      <div className="mt-2 mb-6 h-1 w-16 bg-[#FFC726]" />
+      <div className="mt-2 mb-3 h-1 w-16 bg-[#FFC726]" />
+      <p className="mb-6 text-sm text-zinc-500">Record who paid match fees</p>
 
       {/* Season summary strip */}
       <div className="mb-8 grid grid-cols-3 gap-3">

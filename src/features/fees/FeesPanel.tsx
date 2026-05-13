@@ -182,6 +182,7 @@ export default function FeesPanel({
           <h1 className="text-lg font-black uppercase tracking-tight leading-tight">
             {kickstartTeamName} — Match Fees
           </h1>
+          <p className="text-xs text-zinc-500 mt-0.5">Record who paid match fees</p>
         </div>
         <div className="flex items-center justify-between bg-[#00267F] px-3 py-2 text-white">
           <span className="text-lg font-black">${collectedDollars} collected</span>
