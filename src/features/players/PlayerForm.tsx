@@ -1,20 +1,29 @@
 "use client";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import type { PlayerFormState } from "./actions";
+
+type SquadPlayer = {
+  id: string;
+  jersey_number: number | null;
+  first_name: string;
+  last_name: string;
+};
 
 type Props = {
   action: (prev: PlayerFormState, formData: FormData) => Promise<PlayerFormState>;
   defaultValues?: {
     first_name?: string;
     last_name?: string;
-    date_of_birth?: string;
-    preferred_position?: "GK" | "DEF" | "MID" | "FWD";
+    date_of_birth?: string | null;
+    preferred_position?: "GK" | "DEF" | "MID" | "FWD" | null;
     jersey_number?: number | null;
     status?: "active" | "injured" | "unavailable" | "inactive";
     notes_summary?: string | null;
   };
   submitLabel?: string;
   cancelHref: string;
+  squadPlayers?: SquadPlayer[];
+  currentPlayerId?: string;
 };
 
 function FieldError({ errors }: { errors?: string[] }) {
@@ -25,13 +34,41 @@ function FieldError({ errors }: { errors?: string[] }) {
 const inputCls =
   "w-full rounded-md border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#00267F]";
 
+function OptionalBadge() {
+  return <span className="ml-1 text-xs font-normal text-zinc-400">(optional)</span>;
+}
+
 export default function PlayerForm({
   action,
   defaultValues,
   submitLabel = "Save player",
   cancelHref,
+  squadPlayers,
+  currentPlayerId,
 }: Props) {
   const [state, formAction, pending] = useActionState(action, null);
+  const [jerseyWarning, setJerseyWarning] = useState<string | null>(null);
+
+  function handleJerseyChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value;
+    if (!val || !squadPlayers?.length) {
+      setJerseyWarning(null);
+      return;
+    }
+    const num = parseInt(val, 10);
+    if (isNaN(num)) {
+      setJerseyWarning(null);
+      return;
+    }
+    const clash = squadPlayers.find(
+      (p) => p.jersey_number === num && p.id !== currentPlayerId,
+    );
+    setJerseyWarning(
+      clash
+        ? `Jersey #${num} is already used by ${clash.first_name} ${clash.last_name} in this squad.`
+        : null,
+    );
+  }
 
   return (
     <form action={formAction} className="flex flex-col gap-4 max-w-lg">
@@ -74,16 +111,15 @@ export default function PlayerForm({
 
       <div className="flex flex-col gap-1">
         <label htmlFor="date_of_birth" className="text-sm font-medium">
-          Date of birth
+          Date of birth <OptionalBadge />
         </label>
         <input
           id="date_of_birth"
           name="date_of_birth"
           type="date"
-          required
           min="2011-01-01"
           max="2013-12-31"
-          defaultValue={defaultValues?.date_of_birth}
+          defaultValue={defaultValues?.date_of_birth ?? ""}
           className={inputCls}
         />
         <FieldError errors={state?.errors?.date_of_birth} />
@@ -92,18 +128,15 @@ export default function PlayerForm({
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1">
           <label htmlFor="preferred_position" className="text-sm font-medium">
-            Position
+            Position <OptionalBadge />
           </label>
           <select
             id="preferred_position"
             name="preferred_position"
-            required
             defaultValue={defaultValues?.preferred_position ?? ""}
             className={inputCls}
           >
-            <option value="" disabled>
-              Select…
-            </option>
+            <option value="">— not set —</option>
             <option value="GK">GK — Goalkeeper</option>
             <option value="DEF">DEF — Defender</option>
             <option value="MID">MID — Midfielder</option>
@@ -114,7 +147,7 @@ export default function PlayerForm({
 
         <div className="flex flex-col gap-1">
           <label htmlFor="jersey_number" className="text-sm font-medium">
-            Jersey number
+            Jersey number <OptionalBadge />
           </label>
           <input
             id="jersey_number"
@@ -123,9 +156,14 @@ export default function PlayerForm({
             min={1}
             max={99}
             defaultValue={defaultValues?.jersey_number ?? ""}
+            onChange={handleJerseyChange}
             className={inputCls}
           />
-          <FieldError errors={state?.errors?.jersey_number} />
+          {jerseyWarning ? (
+            <p className="mt-1 text-xs text-amber-600">{jerseyWarning}</p>
+          ) : (
+            <FieldError errors={state?.errors?.jersey_number} />
+          )}
         </div>
       </div>
 
@@ -149,7 +187,7 @@ export default function PlayerForm({
 
       <div className="flex flex-col gap-1">
         <label htmlFor="notes_summary" className="text-sm font-medium">
-          Notes
+          Notes <OptionalBadge />
         </label>
         <textarea
           id="notes_summary"

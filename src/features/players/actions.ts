@@ -7,16 +7,23 @@ import { createServerClient } from "@/lib/supabase/server";
 const playerSchema = z.object({
   first_name: z.string().min(1, "Required").max(100).trim(),
   last_name: z.string().min(1, "Required").max(100).trim(),
-  date_of_birth: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid date")
-    .refine(
-      (v) =>
-        new Date(v) >= new Date("2011-01-01") &&
-        new Date(v) <= new Date("2013-12-31"),
-      "Player must be born 2011–2013 for U15 eligibility",
-    ),
-  preferred_position: z.enum(["GK", "DEF", "MID", "FWD"]),
+  date_of_birth: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? undefined : v),
+    z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid date")
+      .refine(
+        (v) =>
+          new Date(v) >= new Date("2011-01-01") &&
+          new Date(v) <= new Date("2013-12-31"),
+        "Player must be born 2011–2013 for U15 eligibility",
+      )
+      .optional(),
+  ),
+  preferred_position: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? undefined : v),
+    z.enum(["GK", "DEF", "MID", "FWD"]).optional(),
+  ),
   jersey_number: z.preprocess(
     (v) => (v === "" || v === null || v === undefined ? null : Number(v)),
     z.number().int().min(1).max(99).nullable(),
@@ -61,16 +68,7 @@ export async function createPlayer(
     .from("players")
     .insert({ ...parsed.data, squad_id: squad.id });
 
-  if (error) {
-    if (error.code === "23505") {
-      return {
-        errors: {
-          jersey_number: ["Jersey number already taken in this squad."],
-        },
-      };
-    }
-    return { message: "Failed to add player. Try again." };
-  }
+  if (error) return { message: "Failed to add player. Try again." };
 
   revalidatePath(`/squads/${squadCode}/players`);
   redirect(`/squads/${squadCode}/players`);
@@ -97,16 +95,7 @@ export async function updatePlayer(
     .update(parsed.data)
     .eq("id", playerId);
 
-  if (error) {
-    if (error.code === "23505") {
-      return {
-        errors: {
-          jersey_number: ["Jersey number already taken in this squad."],
-        },
-      };
-    }
-    return { message: "Failed to update player. Try again." };
-  }
+  if (error) return { message: "Failed to update player. Try again." };
 
   revalidatePath(`/players/${playerId}`);
   redirect(`/players/${playerId}`);
