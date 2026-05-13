@@ -1,6 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server";
 
-const STATIC_LINKS = [
+const LINKS = [
   {
     href: "/fixtures",
     title: "Enter results",
@@ -16,42 +16,12 @@ const STATIC_LINKS = [
     title: "Manage squads",
     description: "View and edit player rosters",
   },
+  {
+    href: "/fees",
+    title: "Match fees",
+    description: "Record who paid match fees",
+  },
 ];
-
-async function getFeesHref(supabase: Awaited<ReturnType<typeof createServerClient>>): Promise<string> {
-  // Try next upcoming Kickstart fixture first, then most recent past one.
-  const now = new Date().toISOString();
-
-  const { data: upcoming } = await supabase
-    .from("fixtures")
-    .select("id, home_team:home_team_id(is_kickstart), away_team:away_team_id(is_kickstart)")
-    .gte("kickoff_at", now)
-    .order("kickoff_at", { ascending: true })
-    .limit(10);
-
-  const nextKickstart = (upcoming ?? []).find((f) => {
-    const home = f.home_team as unknown as { is_kickstart: boolean };
-    const away = f.away_team as unknown as { is_kickstart: boolean };
-    return home.is_kickstart || away.is_kickstart;
-  });
-
-  if (nextKickstart) return `/fixtures/${nextKickstart.id}/fees`;
-
-  const { data: recent } = await supabase
-    .from("fixtures")
-    .select("id, home_team:home_team_id(is_kickstart), away_team:away_team_id(is_kickstart)")
-    .lt("kickoff_at", now)
-    .order("kickoff_at", { ascending: false })
-    .limit(10);
-
-  const lastKickstart = (recent ?? []).find((f) => {
-    const home = f.home_team as unknown as { is_kickstart: boolean };
-    const away = f.away_team as unknown as { is_kickstart: boolean };
-    return home.is_kickstart || away.is_kickstart;
-  });
-
-  return lastKickstart ? `/fixtures/${lastKickstart.id}/fees` : "/fixtures";
-}
 
 export default async function DashboardPage() {
   const supabase = await createServerClient();
@@ -59,26 +29,14 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: profile }, feesHref] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("display_name, email")
-      .eq("id", user!.id)
-      .single(),
-    getFeesHref(supabase),
-  ]);
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name, email")
+    .eq("id", user!.id)
+    .single();
 
   const rawName = profile?.display_name ?? profile?.email ?? user?.email ?? "owner";
   const name = rawName.includes(" ") ? rawName.split(" ")[0] : rawName;
-
-  const allLinks = [
-    ...STATIC_LINKS,
-    {
-      href: feesHref,
-      title: "Match fees",
-      description: "Record who paid match fees",
-    },
-  ];
 
   return (
     <div>
@@ -87,7 +45,7 @@ export default async function DashboardPage() {
       </h1>
       <div className="mt-2 mb-8 h-1 w-16 bg-[#FFC726]" />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {allLinks.map((card) => (
+        {LINKS.map((card) => (
           <a
             key={card.href}
             href={card.href}
