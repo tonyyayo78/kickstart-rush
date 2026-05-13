@@ -27,6 +27,7 @@ type FixtureRow = {
   kickoff_at: string;
   venue: string | null;
   status: string;
+  match_state: string | null;
   home_team: TeamInfo;
   away_team: TeamInfo;
 };
@@ -57,7 +58,7 @@ export default async function ResultPage({
   const { data: fixtureRaw } = await supabase
     .from("fixtures")
     .select(
-      `id, kickoff_at, venue, status,
+      `id, kickoff_at, venue, status, match_state,
        home_team:home_team_id(id, team_name, squad_id, is_kickstart),
        away_team:away_team_id(id, team_name, squad_id, is_kickstart)`,
     )
@@ -66,6 +67,48 @@ export default async function ResultPage({
 
   if (!fixtureRaw) notFound();
   const fixture = fixtureRaw as unknown as FixtureRow;
+
+  // If the match was tracked live, show a read-only banner instead of the manual form
+  if (fixture.match_state) {
+    const { data: result } = await supabase
+      .from("results")
+      .select("home_score, away_score")
+      .eq("fixture_id", id)
+      .single();
+
+    const homeScore = result?.home_score ?? 0;
+    const awayScore = result?.away_score ?? 0;
+    const isKickstart = fixture.home_team.is_kickstart || fixture.away_team.is_kickstart;
+
+    return (
+      <div className="max-w-2xl">
+        <div className="mb-1 text-xs text-zinc-400">
+          {FMT.format(new Date(fixture.kickoff_at))}
+          {fixture.venue ? ` · ${fixture.venue}` : ""}
+        </div>
+        <h1 className="mb-6 text-xl font-semibold">
+          {fixture.home_team.team_name} vs {fixture.away_team.team_name}
+        </h1>
+        <div className="rounded-lg border border-[#C7D3F5] bg-[#EEF2FF] p-5">
+          <p className="text-sm font-semibold text-[#00267F]">Tracked live</p>
+          <p className="mt-1 text-2xl font-black tabular-nums">
+            {fixture.home_team.team_name} {homeScore} — {awayScore} {fixture.away_team.team_name}
+          </p>
+          {fixture.match_state !== "full_time" && (
+            <p className="mt-1 text-xs text-zinc-500">Match in progress</p>
+          )}
+          {isKickstart && (
+            <Link
+              href={`/fixtures/${id}/live`}
+              className="mt-3 inline-block text-sm font-medium text-[#00267F] underline hover:text-[#3349A3]"
+            >
+              View match events →
+            </Link>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // Fetch players for both squads
   const squadIds = [fixture.home_team.squad_id, fixture.away_team.squad_id].filter(
