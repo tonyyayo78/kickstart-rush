@@ -68,14 +68,15 @@ export default async function DashboardPage() {
     getFeesHref(supabase),
   ]);
 
-  const name = profile?.display_name ?? profile?.email ?? user?.email ?? "owner";
+  const rawName = profile?.display_name ?? profile?.email ?? user?.email ?? "owner";
+  const name = rawName.includes(" ") ? rawName.split(" ")[0] : rawName;
 
   const allLinks = [
     ...STATIC_LINKS,
     {
       href: feesHref,
       title: "Match fees",
-      description: "Record who paid at the gate",
+      description: "Record who paid match fees",
     },
   ];
 
