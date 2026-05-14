@@ -11,12 +11,20 @@ const goalSchema = z.object({
   isOwnGoal: z.boolean(),
 });
 
+const cardSchema = z.object({
+  playerId: z.string().uuid(),
+  cardType: z.enum(["yellow", "red", "second_yellow"]),
+  minute: z.number().int().min(0).max(130).nullable(),
+  note: z.string().max(500).optional(),
+});
+
 const resultSchema = z.object({
   fixtureId: z.string().uuid(),
   homeScore: z.number().int().min(0).max(99),
   awayScore: z.number().int().min(0).max(99),
   matchNotes: z.string().max(5000).optional(),
   scorers: z.array(goalSchema),
+  cards: z.array(cardSchema).default([]),
   homeTeamId: z.string().uuid(),
   awayTeamId: z.string().uuid(),
 });
@@ -37,7 +45,7 @@ export async function createResult(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  const { fixtureId, homeScore, awayScore, matchNotes, scorers, homeTeamId, awayTeamId } =
+  const { fixtureId, homeScore, awayScore, matchNotes, scorers, cards, homeTeamId, awayTeamId } =
     parsed.data;
 
   const homeScorers = scorers.filter((s) => s.competitionTeamId === homeTeamId).length;
@@ -87,6 +95,24 @@ export async function createResult(
     }
   }
 
+  if (cards.length > 0) {
+    const { error: cardsError } = await supabase.from("cards").insert(
+      cards.map((c) => ({
+        fixture_id: fixtureId,
+        player_id: c.playerId,
+        card_type: c.cardType,
+        minute: c.minute,
+        note: c.note ?? null,
+        created_by: user.id,
+      })),
+    );
+
+    if (cardsError) {
+      await supabase.from("results").delete().eq("id", result.id);
+      return { error: "Failed to save cards. Result rolled back." };
+    }
+  }
+
   revalidatePath(`/fixtures/${fixtureId}/result`);
   revalidatePath("/fixtures");
   revalidatePath("/standings");
@@ -109,7 +135,7 @@ export async function updateResult(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  const { homeScore, awayScore, matchNotes, scorers, homeTeamId, awayTeamId } =
+  const { homeScore, awayScore, matchNotes, scorers, cards, homeTeamId, awayTeamId } =
     parsed.data;
 
   const homeScorers = scorers.filter((s) => s.competitionTeamId === homeTeamId).length;
@@ -152,6 +178,25 @@ export async function updateResult(
     }
   }
 
+  // Cards are keyed by fixture_id, not result_id.
+  await supabase.from("cards").delete().eq("fixture_id", fixtureId);
+
+  if (cards.length > 0) {
+    const { error: cardsError } = await supabase.from("cards").insert(
+      cards.map((c) => ({
+        fixture_id: fixtureId,
+        player_id: c.playerId,
+        card_type: c.cardType,
+        minute: c.minute,
+        note: c.note ?? null,
+        created_by: user.id,
+      })),
+    );
+    if (cardsError) {
+      return { error: "Scores saved but cards failed. Please re-enter cards." };
+    }
+  }
+
   revalidatePath(`/fixtures/${fixtureId}/result`);
   revalidatePath("/fixtures");
   revalidatePath("/standings");
@@ -168,6 +213,8 @@ export async function deleteResult(
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
+  // Cards FK to fixture_id — not cascade-deleted with the result row.
+  await supabase.from("cards").delete().eq("fixture_id", fixtureId);
   await supabase.from("results").delete().eq("id", resultId);
 
   revalidatePath(`/fixtures/${fixtureId}/result`);
