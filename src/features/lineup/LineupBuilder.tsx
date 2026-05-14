@@ -19,13 +19,28 @@ type SavedPlayer = {
   slot_order: number;
 };
 
+type Card = {
+  player_id: string;
+  card_type: string;
+};
+
+type CardDisplay = "yellow" | "red" | "second_yellow";
+
 type Props = {
   fixtureId: string;
   players: Player[];
   formations: Formation[];
   savedFormation: string | null;
   savedPlayers: SavedPlayer[];
+  fixtureCards?: Card[];
 };
+
+function cardDisplay(cards: Card[]): CardDisplay | null {
+  if (cards.some((c) => c.card_type === "red")) return "red";
+  if (cards.some((c) => c.card_type === "second_yellow")) return "second_yellow";
+  if (cards.some((c) => c.card_type === "yellow")) return "yellow";
+  return null;
+}
 
 type SheetState =
   | { mode: "closed" }
@@ -65,6 +80,7 @@ export default function LineupBuilder({
   formations,
   savedFormation,
   savedPlayers,
+  fixtureCards = [],
 }: Props) {
   const [formation, setFormation] = useState<FormationId>(
     (savedFormation as FormationId | null) ??
@@ -101,6 +117,13 @@ export default function LineupBuilder({
   const currentFormation = formations.find((f) => f.id === formation) ?? formations[0];
   const playerById = new Map(players.map((p) => [p.id, p]));
   const assignedIds = new Set([...starters.values(), ...subs.values()]);
+
+  // Group cards by player_id for O(1) chip lookup
+  const cardsByPlayer = new Map<string, Card[]>();
+  for (const c of fixtureCards) {
+    const existing = cardsByPlayer.get(c.player_id) ?? [];
+    cardsByPlayer.set(c.player_id, [...existing, c]);
+  }
 
   // Scroll lock while sheet is open
   useEffect(() => {
@@ -432,6 +455,11 @@ export default function LineupBuilder({
                 />
               </filter>
 
+              {/* Sent-off chip: reduce saturation to ~45% */}
+              <filter id="chip-sent-off" x="-30%" y="-30%" width="160%" height="160%">
+                <feColorMatrix type="saturate" values="0.45" />
+              </filter>
+
               {/* CSS animations scoped with lbp- prefix */}
               <style>{SVG_STYLES}</style>
             </defs>
@@ -477,6 +505,10 @@ export default function LineupBuilder({
                 : slot.label;
               const subLabel = filled ? lastName(p).slice(0, 6) : null;
 
+              const chipCards = pid ? (cardsByPlayer.get(pid) ?? []) : [];
+              const card = filled ? cardDisplay(chipCards) : null;
+              const sentOff = card === "red" || card === "second_yellow";
+
               return (
                 // Key includes pid so a new assignment remounts the chip,
                 // re-triggering the chip-enter animation.
@@ -493,6 +525,7 @@ export default function LineupBuilder({
                   role="button"
                   aria-label={`${slot.label}: ${p?.display_name ?? "Empty — tap to assign"}`}
                   className={`cursor-pointer outline-none lbp-slot-btn ${filled ? "lbp-chip-enter" : ""}`}
+                  filter={sentOff ? "url(#chip-sent-off)" : undefined}
                 >
                   {/* Invisible enlarged hit target */}
                   <circle cx={slot.x} cy={slot.y} r={26} fill="transparent" />
@@ -548,6 +581,36 @@ export default function LineupBuilder({
                       {subLabel}
                     </text>
                   )}
+
+                  {/* Card indicator — top-right of chip */}
+                  {card === "yellow" && (
+                    <rect
+                      x={slot.x + 12} y={slot.y - 24}
+                      width={6} height={9} rx={0.5}
+                      fill="#FACC15" stroke="#854D0E" strokeWidth={0.5}
+                    />
+                  )}
+                  {card === "red" && (
+                    <rect
+                      x={slot.x + 12} y={slot.y - 24}
+                      width={6} height={9} rx={0.5}
+                      fill="#DC2626" stroke="#7F1D1D" strokeWidth={0.5}
+                    />
+                  )}
+                  {card === "second_yellow" && (
+                    <>
+                      <rect
+                        x={slot.x + 14} y={slot.y - 22}
+                        width={6} height={9} rx={0.5}
+                        fill="#DC2626" stroke="#7F1D1D" strokeWidth={0.5}
+                      />
+                      <rect
+                        x={slot.x + 11} y={slot.y - 25}
+                        width={6} height={9} rx={0.5}
+                        fill="#FACC15" stroke="#854D0E" strokeWidth={0.5}
+                      />
+                    </>
+                  )}
                 </g>
               );
             })}
@@ -564,12 +627,18 @@ export default function LineupBuilder({
               const pid = subs.get(slotOrder) ?? null;
               const p = pid ? playerById.get(pid) : undefined;
               const filled = p != null;
+
+              const chipCards = pid ? (cardsByPlayer.get(pid) ?? []) : [];
+              const card = filled ? cardDisplay(chipCards) : null;
+              const sentOff = card === "red" || card === "second_yellow";
+
               return (
                 <button
                   key={filled ? `sub-${slotOrder}-${pid}` : `sub-${slotOrder}`}
                   type="button"
                   onClick={() => handleSlotTap("sub", slotOrder)}
-                  className={`flex h-[56px] w-[56px] shrink-0 flex-col items-center justify-center rounded-full border-2 transition-all active:scale-95 ${
+                  style={sentOff ? { filter: "saturate(0.45)" } : undefined}
+                  className={`relative flex h-[56px] w-[56px] shrink-0 flex-col items-center justify-center rounded-full border-2 transition-all active:scale-95 ${
                     filled
                       ? "border-[#001650] bg-gradient-to-br from-[#4A6ECC] via-[#00267F] to-[#001650] text-white shadow-lg shadow-black/30"
                       : "border-dashed border-zinc-300 bg-white text-zinc-400 shadow-md shadow-black/10 hover:border-zinc-400"
@@ -591,6 +660,36 @@ export default function LineupBuilder({
                     </>
                   ) : (
                     <span className="text-[10px] font-bold">S{slotOrder}</span>
+                  )}
+
+                  {/* Card indicator — top-right of chip */}
+                  {card === "yellow" && (
+                    <span
+                      className="pointer-events-none absolute -right-1 -top-1 h-[9px] w-[6px] rounded-[1px]"
+                      style={{ background: "#FACC15", border: "0.5px solid #854D0E" }}
+                      aria-hidden="true"
+                    />
+                  )}
+                  {card === "red" && (
+                    <span
+                      className="pointer-events-none absolute -right-1 -top-1 h-[9px] w-[6px] rounded-[1px]"
+                      style={{ background: "#DC2626", border: "0.5px solid #7F1D1D" }}
+                      aria-hidden="true"
+                    />
+                  )}
+                  {card === "second_yellow" && (
+                    <>
+                      <span
+                        className="pointer-events-none absolute -right-0.5 -top-0.5 h-[9px] w-[6px] rounded-[1px]"
+                        style={{ background: "#DC2626", border: "0.5px solid #7F1D1D" }}
+                        aria-hidden="true"
+                      />
+                      <span
+                        className="pointer-events-none absolute -right-1.5 -top-1.5 h-[9px] w-[6px] rounded-[1px]"
+                        style={{ background: "#FACC15", border: "0.5px solid #854D0E" }}
+                        aria-hidden="true"
+                      />
+                    </>
                   )}
                 </button>
               );
