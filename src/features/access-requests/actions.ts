@@ -3,12 +3,9 @@ import { z } from "zod";
 import { createAnonPublicClient } from "@/lib/supabase/anon-public";
 
 const ROLES = [
-  "head_coach",
-  "assistant_coach",
-  "team_manager",
-  "technical_staff",
-  "parent",
-  "other",
+  "Coach",
+  "Manager",
+  "Technical Director",
 ] as const;
 
 const schema = z.object({
