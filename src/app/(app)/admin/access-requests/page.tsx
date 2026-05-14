@@ -50,7 +50,7 @@ function StatusBadge({ status }: { status: string }) {
 export default async function AccessRequestsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; warning?: string }>;
 }) {
   const supabase = await createServerClient();
   const {
@@ -89,7 +89,7 @@ export default async function AccessRequestsPage({
 
   const pendingList = pending ?? [];
   const decidedList = decided ?? [];
-  const { error: actionError } = await searchParams;
+  const { error: actionError, warning: actionWarning } = await searchParams;
 
   return (
     <div className="max-w-4xl">
@@ -101,6 +101,11 @@ export default async function AccessRequestsPage({
       {actionError && (
         <p role="alert" className="mb-6 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
           {actionError}
+        </p>
+      )}
+      {actionWarning && (
+        <p role="alert" className="mb-6 rounded-md bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+          {actionWarning}
         </p>
       )}
 

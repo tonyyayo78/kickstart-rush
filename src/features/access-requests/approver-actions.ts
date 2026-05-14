@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { env } from "@/lib/env";
+import { sendInviteEmail } from "@/lib/email/send-invite";
 
 async function assertApprover() {
   const supabase = await createServerClient();
@@ -26,6 +26,11 @@ function errorRedirect(msg: string): never {
   redirect(`/admin/access-requests?error=${encodeURIComponent(msg)}`);
 }
 
+function generateTempPassword(): string {
+  const digits = Math.floor(1000 + Math.random() * 9000);
+  return `Kickstart-${digits}`;
+}
+
 export async function approveRequest(formData: FormData): Promise<void> {
   const requestId = formData.get("request_id") as string;
   if (!requestId) redirect("/admin/access-requests");
@@ -42,20 +47,22 @@ export async function approveRequest(formData: FormData): Promise<void> {
   if (reqErr || !request) errorRedirect("Request not found.");
   if (request.status !== "pending") errorRedirect("Request is no longer pending.");
 
-  const baseUrl =
-    env.NEXT_PUBLIC_APP_URL ?? "https://kickstart-rush.vercel.app";
-  const { data: invited, error: inviteErr } =
-    await admin.auth.admin.inviteUserByEmail(request.email, {
-      redirectTo: `${baseUrl}/api/auth/callback?next=/auth/set-password`,
-    });
+  const tempPassword = generateTempPassword();
 
-  if (inviteErr || !invited.user) {
+  const { data: created, error: createErr } = await admin.auth.admin.createUser({
+    email: request.email,
+    password: tempPassword,
+    email_confirm: true,
+  });
+
+  if (createErr || !created.user) {
+    console.error("[approveRequest] createUser failed:", createErr);
     errorRedirect(
-      `Failed to send invite: ${inviteErr?.message ?? "unknown error"}. No changes made.`,
+      `Failed to create account: ${createErr?.message ?? "unknown error"}. No changes made.`,
     );
   }
 
-  const newUserId = invited.user.id;
+  const newUserId = created.user.id;
   const displayName =
     [request.first_name, request.last_name].filter(Boolean).join(" ") ||
     request.email;
@@ -68,11 +75,13 @@ export async function approveRequest(formData: FormData): Promise<void> {
     role: request.role,
     status: "active",
     is_approver: false,
+    must_change_password: true,
   });
 
   if (profileErr) {
+    console.error("[approveRequest] profile insert failed:", profileErr);
     errorRedirect(
-      `Invite sent but profile creation failed: ${profileErr.message}. Check manually.`,
+      `Account created but profile creation failed: ${profileErr.message}. Check manually.`,
     );
   }
 
@@ -85,6 +94,7 @@ export async function approveRequest(formData: FormData): Promise<void> {
       squadIds.map((squad_id) => ({ profile_id: newUserId, squad_id })),
     );
     if (teamsErr) {
+      console.error("[approveRequest] profile_teams insert failed:", teamsErr);
       errorRedirect(
         `Profile created but team linking failed: ${teamsErr.message}. Check manually.`,
       );
@@ -99,6 +109,23 @@ export async function approveRequest(formData: FormData): Promise<void> {
       decided_by: userId,
     })
     .eq("id", requestId);
+
+  const emailResult = await sendInviteEmail({
+    to: request.email,
+    firstName: request.first_name ?? null,
+    tempPassword,
+    signInUrl: "https://kickstart-rush.vercel.app/sign-in",
+  });
+
+  if (!emailResult.ok) {
+    console.error("[approveRequest] invite email failed:", emailResult.error);
+    revalidatePath("/admin/access-requests");
+    redirect(
+      `/admin/access-requests?warning=${encodeURIComponent(
+        `Account approved but invite email failed: ${emailResult.error}. Share credentials manually: ${request.email} / ${tempPassword}`,
+      )}`,
+    );
+  }
 
   revalidatePath("/admin/access-requests");
   redirect("/admin/access-requests");
