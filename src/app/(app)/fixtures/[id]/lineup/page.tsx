@@ -46,6 +46,11 @@ type LineupRow = {
   lineup_players: LineupPlayerRow[];
 };
 
+type Card = {
+  player_id: string;
+  card_type: string;
+};
+
 export default async function LineupPage({
   params,
 }: {
@@ -78,7 +83,7 @@ export default async function LineupPage({
       ? fixture.away_team.team_name
       : fixture.home_team.team_name;
 
-  const [{ data: playersRaw }, { data: existingLineupRaw }] =
+  const [{ data: playersRaw }, { data: existingLineupRaw }, { data: cardsRaw }] =
     await Promise.all([
       kickstartTeam.squad_id
         ? supabase
@@ -97,10 +102,15 @@ export default async function LineupPage({
         )
         .eq("fixture_id", id)
         .maybeSingle(),
+      supabase
+        .from("cards")
+        .select("player_id, card_type")
+        .eq("fixture_id", id),
     ]);
 
   const players = (playersRaw ?? []) as Player[];
   const existingLineup = existingLineupRaw as unknown as LineupRow | null;
+  const fixtureCards = (cardsRaw ?? []) as Card[];
 
   return (
     <div className="max-w-2xl">
@@ -136,6 +146,7 @@ export default async function LineupPage({
           formations={FORMATIONS}
           savedFormation={existingLineup?.formation ?? null}
           savedPlayers={existingLineup?.lineup_players ?? []}
+          fixtureCards={fixtureCards}
         />
       )}
     </div>
