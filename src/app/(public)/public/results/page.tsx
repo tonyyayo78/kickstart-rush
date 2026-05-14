@@ -1,10 +1,17 @@
 import { createAnonPublicClient } from "@/lib/supabase/anon-public";
+import CardPill from "@/components/CardPill";
 
 type Scorer = {
   team_name: string;
   player_display_name: string | null;
   minute: number | null;
   is_own_goal: boolean;
+};
+
+type Card = {
+  player_display_name: string;
+  card_type: string;
+  minute: number | null;
 };
 
 type Result = {
@@ -15,6 +22,7 @@ type Result = {
   home_score: number;
   away_score: number;
   scorers: Scorer[];
+  cards: Card[];
 };
 
 export default async function PublicResultsPage() {
@@ -75,6 +83,19 @@ export default async function PublicResultsPage() {
                       {s.player_display_name ?? s.team_name}
                       {s.minute != null && (
                         <span className="text-zinc-400"> {s.minute}&apos;</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {r.cards?.length > 0 && (
+                <ul className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+                  {r.cards.map((c, j) => (
+                    <li key={j} className="flex items-center gap-1.5 text-sm text-zinc-600">
+                      {c.player_display_name}
+                      <CardPill cardType={c.card_type} />
+                      {c.minute != null && (
+                        <span className="text-zinc-400">{c.minute}&apos;</span>
                       )}
                     </li>
                   ))}
