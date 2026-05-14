@@ -4,6 +4,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { createResult, updateResult, deleteResult } from "@/features/results/actions";
 import ResultForm from "./ResultForm";
 import DeleteResultButton from "@/features/results/DeleteResultButton";
+import CardPill from "@/components/CardPill";
 
 const FMT = new Intl.DateTimeFormat("en-BB", {
   timeZone: "America/Barbados",
@@ -84,9 +85,22 @@ export default async function ResultPage({
       .eq("fixture_id", id)
       .single();
 
+    const { data: liveCards } = await supabase
+      .from("cards")
+      .select("card_type, minute, players(display_name)")
+      .eq("fixture_id", id)
+      .order("minute", { ascending: true, nullsFirst: false });
+
+    type LiveCard = {
+      card_type: string;
+      minute: number | null;
+      players: { display_name: string } | null;
+    };
+
     const homeScore = result?.home_score ?? 0;
     const awayScore = result?.away_score ?? 0;
     const isKickstart = fixture.home_team.is_kickstart || fixture.away_team.is_kickstart;
+    const cards = (liveCards as unknown as LiveCard[]) ?? [];
 
     return (
       <div className="max-w-2xl">
@@ -104,6 +118,19 @@ export default async function ResultPage({
           </p>
           {fixture.match_state !== "full_time" && (
             <p className="mt-1 text-xs text-zinc-500">Match in progress</p>
+          )}
+          {cards.length > 0 && (
+            <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+              {cards.map((c, i) => (
+                <li key={i} className="flex items-center gap-1.5 text-sm text-zinc-700">
+                  {c.players?.display_name}
+                  <CardPill cardType={c.card_type} />
+                  {c.minute != null && (
+                    <span className="text-zinc-400">{c.minute}&apos;</span>
+                  )}
+                </li>
+              ))}
+            </ul>
           )}
           {isKickstart && (
             <Link
