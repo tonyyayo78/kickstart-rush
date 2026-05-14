@@ -61,6 +61,17 @@ export async function setPassword(
     return { error: error.message };
   }
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    await supabase
+      .from("profiles")
+      .update({ must_change_password: false })
+      .eq("id", user.id);
+  }
+
   revalidatePath("/");
   redirect("/dashboard");
 }

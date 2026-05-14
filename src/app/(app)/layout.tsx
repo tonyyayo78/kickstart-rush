@@ -17,9 +17,11 @@ export default async function AppLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("email, display_name, is_approver")
+    .select("email, display_name, is_approver, must_change_password")
     .eq("id", user.id)
     .single();
+
+  if (profile?.must_change_password) redirect("/auth/set-password");
 
   const displayName = profile?.display_name ?? profile?.email ?? user.email;
   const isApprover = profile?.is_approver ?? false;
