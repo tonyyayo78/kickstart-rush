@@ -108,6 +108,7 @@ export async function createResult(
     );
 
     if (cardsError) {
+      console.error("cards insert error (create):", cardsError);
       await supabase.from("results").delete().eq("id", result.id);
       return { error: "Failed to save cards. Result rolled back." };
     }
@@ -193,6 +194,7 @@ export async function updateResult(
       })),
     );
     if (cardsError) {
+      console.error("cards insert error (update):", cardsError);
       return { error: "Scores saved but cards failed. Please re-enter cards." };
     }
   }
