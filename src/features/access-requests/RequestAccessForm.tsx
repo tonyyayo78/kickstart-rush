@@ -11,12 +11,9 @@ type Props = {
 };
 
 const ROLE_OPTIONS = [
-  { value: "head_coach", label: "Head Coach" },
-  { value: "assistant_coach", label: "Assistant Coach" },
-  { value: "team_manager", label: "Team Manager" },
-  { value: "technical_staff", label: "Technical Staff" },
-  { value: "parent", label: "Parent" },
-  { value: "other", label: "Other" },
+  { value: "Coach", label: "Coach" },
+  { value: "Manager", label: "Manager" },
+  { value: "Technical Director", label: "Technical Director" },
 ] as const;
 
 const inputCls =
