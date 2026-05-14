@@ -17,11 +17,12 @@ export default async function AppLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("email, display_name")
+    .select("email, display_name, is_approver")
     .eq("id", user.id)
     .single();
 
   const displayName = profile?.display_name ?? profile?.email ?? user.email;
+  const isApprover = profile?.is_approver ?? false;
 
   return (
     <div className="min-h-screen">
@@ -54,6 +55,11 @@ export default async function AppLayout({
             <a href="/squads/KP2026/players" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
               Premier
             </a>
+            {isApprover && (
+              <a href="/admin/access-requests" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
+                Requests
+              </a>
+            )}
           </nav>
         </div>
         <div className="flex items-center gap-4">

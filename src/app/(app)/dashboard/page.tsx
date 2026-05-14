@@ -31,12 +31,13 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, email")
+    .select("display_name, email, is_approver")
     .eq("id", user!.id)
     .single();
 
   const rawName = profile?.display_name ?? profile?.email ?? user?.email ?? "owner";
   const name = rawName.includes(" ") ? rawName.split(" ")[0] : rawName;
+  const isApprover = profile?.is_approver ?? false;
 
   return (
     <div>
@@ -58,6 +59,18 @@ export default async function DashboardPage() {
             <p className="mt-4 font-bold text-[#FFC726]">→</p>
           </a>
         ))}
+        {isApprover && (
+          <a
+            href="/admin/access-requests"
+            className="rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-[#00267F] hover:shadow-lg"
+          >
+            <h2 className="text-lg font-bold uppercase tracking-tight">
+              Access requests
+            </h2>
+            <p className="mt-1 text-sm text-zinc-600">Review and approve pending access</p>
+            <p className="mt-4 font-bold text-[#FFC726]">→</p>
+          </a>
+        )}
       </div>
     </div>
   );
