@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { env } from "@/lib/env";
 
 async function assertApprover() {
   const supabase = await createServerClient();
@@ -41,8 +42,12 @@ export async function approveRequest(formData: FormData): Promise<void> {
   if (reqErr || !request) errorRedirect("Request not found.");
   if (request.status !== "pending") errorRedirect("Request is no longer pending.");
 
+  const baseUrl =
+    env.NEXT_PUBLIC_APP_URL ?? "https://kickstart-rush.vercel.app";
   const { data: invited, error: inviteErr } =
-    await admin.auth.admin.inviteUserByEmail(request.email);
+    await admin.auth.admin.inviteUserByEmail(request.email, {
+      redirectTo: `${baseUrl}/api/auth/callback?next=/auth/set-password`,
+    });
 
   if (inviteErr || !invited.user) {
     errorRedirect(

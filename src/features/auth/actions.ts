@@ -1,10 +1,8 @@
 "use server";
-import { createHash, timingSafeEqual } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createServerClient } from "@/lib/supabase/server";
-import { env } from "@/lib/env";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -12,13 +10,6 @@ const credentialsSchema = z.object({
 });
 
 const GENERIC_MESSAGE = "Invalid email or password.";
-
-// Hash both strings to equal-length buffers before comparing so
-// timingSafeEqual never leaks information via buffer-length mismatch.
-function safeEmailEqual(a: string, b: string): boolean {
-  const hash = (s: string) => createHash("sha256").update(s).digest();
-  return timingSafeEqual(hash(a), hash(b));
-}
 
 export type SignInState = { message: string } | null;
 
@@ -36,16 +27,38 @@ export async function signIn(
   }
 
   const { email, password } = parsed.data;
-
-  if (!safeEmailEqual(email.toLowerCase(), env.OWNER_ALLOWED_EMAIL.toLowerCase())) {
-    return { message: GENERIC_MESSAGE };
-  }
-
   const supabase = await createServerClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     return { message: GENERIC_MESSAGE };
+  }
+
+  revalidatePath("/");
+  redirect("/dashboard");
+}
+
+export type SetPasswordState = { error: string } | null;
+
+export async function setPassword(
+  _prev: SetPasswordState,
+  formData: FormData,
+): Promise<SetPasswordState> {
+  const password = (formData.get("password") as string) ?? "";
+  const confirm = (formData.get("confirm") as string) ?? "";
+
+  if (password.length < 8) {
+    return { error: "Password must be at least 8 characters." };
+  }
+  if (password !== confirm) {
+    return { error: "Passwords do not match." };
+  }
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    return { error: error.message };
   }
 
   revalidatePath("/");
