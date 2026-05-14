@@ -27,7 +27,8 @@ const schema = z.object({
   // Optional: falls back to VERCEL_URL (set automatically by Vercel) if absent.
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
   OWNER_ALLOWED_EMAIL: z.string().email(),
-  RESEND_API_KEY: z.string().min(10),
+  GMAIL_USER: z.string().email(),
+  GMAIL_APP_PASSWORD: z.string().min(10),
 });
 
 const raw = {
@@ -40,7 +41,8 @@ const raw = {
       ? `https://${process.env.VERCEL_URL}`
       : undefined),
   OWNER_ALLOWED_EMAIL: process.env.OWNER_ALLOWED_EMAIL,
-  RESEND_API_KEY: process.env.RESEND_API_KEY,
+  GMAIL_USER: process.env.GMAIL_USER,
+  GMAIL_APP_PASSWORD: process.env.GMAIL_APP_PASSWORD,
 };
 
 const result = schema.safeParse(raw);

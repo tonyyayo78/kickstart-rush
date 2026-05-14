@@ -1,4 +1,5 @@
 import "server-only";
+import nodemailer from "nodemailer";
 import { env } from "@/lib/env";
 
 type SendInviteParams = {
@@ -87,37 +88,27 @@ Sign in at: ${signInUrl}
 
 You'll be asked to set a new password on your first sign-in.`;
 
-  let res: Response;
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: env.GMAIL_USER,
+      pass: env.GMAIL_APP_PASSWORD,
+    },
+  });
+
   try {
-    res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "Kickstart RUSH FC <onboarding@resend.dev>",
-        to,
-        subject: "Your Kickstart Rush account is ready",
-        html,
-        text,
-      }),
+    const info = await transporter.sendMail({
+      from: `Kickstart Rush <${env.GMAIL_USER}>`,
+      to,
+      subject: "Your Kickstart Rush account is ready",
+      html,
+      text,
     });
-  } catch (fetchErr) {
-    const error = `Resend fetch failed: ${String(fetchErr)}`;
-    console.error("[sendInviteEmail]", error);
-    return { ok: false, error };
+    return { ok: true, messageId: info.messageId };
+  } catch (err) {
+    console.error("[sendInviteEmail] Gmail SMTP error:", err);
+    return { ok: false, error: String(err) };
   }
-
-  const body = await res.json().catch(() => null);
-
-  if (!res.ok) {
-    console.error("[sendInviteEmail] Resend error response:", JSON.stringify(body));
-    return {
-      ok: false,
-      error: `Resend ${res.status}: ${body?.message ?? body?.name ?? "unknown error"}`,
-    };
-  }
-
-  return { ok: true, messageId: (body as { id: string }).id };
 }
