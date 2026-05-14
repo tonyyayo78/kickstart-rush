@@ -69,19 +69,19 @@ export async function submitAccessRequest(
   if (dupErr) return { message: "Something went wrong. Please try again." };
   if (alreadyPending) return { success: true };
 
-  const { data: newRequest, error: reqErr } = await supabase
-    .from("access_requests")
-    .insert({ first_name, last_name, email, role, notes, status: "pending" })
-    .select("id")
-    .single();
+  const requestId = crypto.randomUUID();
 
-  if (reqErr || !newRequest) {
+  const { error: reqErr } = await supabase
+    .from("access_requests")
+    .insert({ id: requestId, first_name, last_name, email, role, notes, status: "pending" });
+
+  if (reqErr) {
     console.error("access_requests insert error:", reqErr);
     return { message: "Failed to submit your request. Please try again." };
   }
 
   const teamRows = team_ids.map((squad_id) => ({
-    request_id: newRequest.id,
+    request_id: requestId,
     squad_id,
   }));
 
