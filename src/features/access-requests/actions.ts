@@ -76,6 +76,7 @@ export async function submitAccessRequest(
     .single();
 
   if (reqErr || !newRequest) {
+    console.error("access_requests insert error:", reqErr);
     return { message: "Failed to submit your request. Please try again." };
   }
 
@@ -89,6 +90,7 @@ export async function submitAccessRequest(
     .insert(teamRows);
 
   if (teamErr) {
+    console.error("access_request_teams insert error:", teamErr);
     return { message: "Failed to submit your request. Please try again." };
   }
 
