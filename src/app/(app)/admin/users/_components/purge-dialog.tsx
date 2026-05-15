@@ -25,19 +25,19 @@ export function PurgeDialog({ target, onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-label="Purge user"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <h2 className="text-base font-bold text-zinc-900">Permanently purge user</h2>
-        <p className="mt-2 text-sm text-zinc-600">
-          This hard-deletes <strong>{target.email}</strong> from auth and cannot be
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-card-elevated">
+        <h2 className="font-display text-base font-semibold text-card-foreground">Permanently purge user</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          This hard-deletes <strong className="text-foreground">{target.email}</strong> from auth and cannot be
           undone. Historical records (audit log, results, etc.) are preserved with
           authorship anonymised.
         </p>
-        <p className="mt-3 text-sm text-zinc-700 font-medium">
+        <p className="mt-3 text-sm font-medium text-foreground">
           Type{" "}
-          <code className="rounded bg-zinc-100 px-1 font-mono text-xs">
+          <code className="rounded bg-muted px-1 font-mono text-xs">
             {target.email}
           </code>{" "}
           to confirm:
@@ -55,10 +55,10 @@ export function PurgeDialog({ target, onClose }: Props) {
             placeholder={target.email}
             autoFocus
             autoComplete="off"
-            className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-destructive"
           />
           {clientError && (
-            <p role="alert" className="text-xs text-red-600">
+            <p role="alert" className="text-xs text-destructive">
               {clientError}
             </p>
           )}
@@ -66,13 +66,13 @@ export function PurgeDialog({ target, onClose }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50"
+              className="rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700"
+              className="rounded-md bg-destructive px-3 py-1.5 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90"
             >
               Purge permanently
             </button>

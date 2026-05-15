@@ -46,10 +46,10 @@ function abs(iso: string): string {
 function DecidedPill({ status }: { status: string }) {
   const cls =
     status === "approved"
-      ? "bg-green-100 text-green-800"
-      : "bg-zinc-100 text-zinc-500";
+      ? "bg-success/10 text-success border border-success/20"
+      : "bg-muted text-muted-foreground border border-border";
   return (
-    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${cls}`}>
+    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${cls}`}>
       {status}
     </span>
   );
@@ -65,11 +65,11 @@ function SortTh({
   return (
     <th
       onClick={() => onSort(col)}
-      className="cursor-pointer select-none px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 hover:text-zinc-800"
+      className="cursor-pointer select-none px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
     >
       {label}
       <span className="ml-1 font-normal">
-        {active ? (sortDir === "asc" ? "↑" : "↓") : <span className="text-zinc-300">↕</span>}
+        {active ? (sortDir === "asc" ? "↑" : "↓") : <span className="opacity-30">↕</span>}
       </span>
     </th>
   );
@@ -120,7 +120,7 @@ export function RequestsTable({
   return (
     <div>
       {/* Pending */}
-      <div className="flex justify-end p-3 border-b border-zinc-100">
+      <div className="flex justify-end p-3 border-b border-border">
         <input
           type="search"
           placeholder="Search…"
@@ -133,41 +133,41 @@ export function RequestsTable({
               200,
             );
           }}
-          className="w-52 rounded-md border border-zinc-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00267F]"
+          className="w-52 rounded-md border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
 
       {sorted.length === 0 ? (
-        <p className="py-16 text-center text-sm text-zinc-400">
+        <p className="py-16 text-center text-sm text-muted-foreground">
           {search ? "No requests match your search." : "No pending requests. New requests will appear here."}
         </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="sticky top-0 z-10 bg-white shadow-sm">
-              <tr className="border-b border-zinc-200 text-left">
+            <thead className="sticky top-0 z-10 bg-card">
+              <tr className="border-b border-border bg-muted/40 text-left">
                 <SortTh col="requested_at" label="Submitted" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                 <SortTh col="first_name"   label="Name"      sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                 <SortTh col="email"        label="Email"     sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                 <SortTh col="role"         label="Role"      sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Squads</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Message</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-zinc-500">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Squads</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Message</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
               {sorted.map((r) => (
-                <tr key={r.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50">
-                  <td className="px-4 py-2 font-mono text-xs text-zinc-500 tabular-nums" title={abs(r.requested_at)}>
+                <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/30">
+                  <td className="px-4 py-2 font-mono text-xs text-muted-foreground tabular-nums" title={abs(r.requested_at)}>
                     {rel(r.requested_at)}
                   </td>
-                  <td className="px-4 py-2 font-medium text-zinc-900">
+                  <td className="px-4 py-2 font-medium text-foreground">
                     {r.first_name} {r.last_name}
                   </td>
-                  <td className="px-4 py-2 text-zinc-600">{r.email}</td>
-                  <td className="px-4 py-2 text-zinc-600">{r.role}</td>
-                  <td className="px-4 py-2 text-zinc-600">{r.squads || "—"}</td>
-                  <td className="px-4 py-2 max-w-xs text-xs text-zinc-400 italic truncate">
+                  <td className="px-4 py-2 text-muted-foreground">{r.email}</td>
+                  <td className="px-4 py-2 text-muted-foreground">{r.role}</td>
+                  <td className="px-4 py-2 text-muted-foreground">{r.squads || "—"}</td>
+                  <td className="px-4 py-2 max-w-xs text-xs text-muted-foreground/70 italic truncate">
                     {r.notes ? `"${r.notes}"` : "—"}
                   </td>
                   <td className="px-4 py-2 text-right">
@@ -176,7 +176,7 @@ export function RequestsTable({
                         <input type="hidden" name="requestId" value={r.id} />
                         <button
                           type="submit"
-                          className="rounded-md bg-[#00267F] px-3 py-1 text-xs font-bold uppercase tracking-wide text-white hover:bg-[#3349A3]"
+                          className="rounded-md bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-foreground transition-all duration-150 hover:bg-gradient-to-br hover:from-primary hover:to-[hsl(219_70%_30%)] active:scale-[0.98]"
                         >
                           Approve
                         </button>
@@ -185,7 +185,7 @@ export function RequestsTable({
                         <input type="hidden" name="requestId" value={r.id} />
                         <button
                           type="submit"
-                          className="rounded-md border border-red-300 px-3 py-1 text-xs font-bold uppercase tracking-wide text-red-700 hover:bg-red-50"
+                          className="rounded-md border border-destructive/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-destructive transition-colors hover:bg-destructive/10"
                         >
                           Deny
                         </button>
@@ -201,14 +201,14 @@ export function RequestsTable({
 
       {/* Decided history */}
       {historyRows.length > 0 && (
-        <details className="border-t border-zinc-200">
-          <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 hover:text-zinc-800">
+        <details className="border-t border-border">
+          <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground">
             Decided recently ({historyRows.length})
           </summary>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wide text-zinc-500">
+                <tr className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wider text-muted-foreground">
                   <th className="px-4 py-3 font-semibold">Name</th>
                   <th className="px-4 py-3 font-semibold">Email</th>
                   <th className="px-4 py-3 font-semibold">Role</th>
@@ -220,20 +220,20 @@ export function RequestsTable({
               </thead>
               <tbody>
                 {historyRows.map((r) => (
-                  <tr key={r.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50">
-                    <td className="px-4 py-2 font-medium text-zinc-900">
+                  <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/30">
+                    <td className="px-4 py-2 font-medium text-foreground">
                       {r.first_name} {r.last_name}
                     </td>
-                    <td className="px-4 py-2 text-zinc-600">{r.email}</td>
-                    <td className="px-4 py-2 text-zinc-600">{r.role}</td>
-                    <td className="px-4 py-2 text-zinc-600">{r.squads || "—"}</td>
+                    <td className="px-4 py-2 text-muted-foreground">{r.email}</td>
+                    <td className="px-4 py-2 text-muted-foreground">{r.role}</td>
+                    <td className="px-4 py-2 text-muted-foreground">{r.squads || "—"}</td>
                     <td className="px-4 py-2">
                       <DecidedPill status={r.status} />
                     </td>
-                    <td className="px-4 py-2 font-mono text-xs text-zinc-500 tabular-nums" title={r.decided_at ? abs(r.decided_at) : ""}>
+                    <td className="px-4 py-2 font-mono text-xs text-muted-foreground tabular-nums" title={r.decided_at ? abs(r.decided_at) : ""}>
                       {r.decided_at ? rel(r.decided_at) : "—"}
                     </td>
-                    <td className="px-4 py-2 text-xs text-zinc-400">{r.decidedByName ?? "—"}</td>
+                    <td className="px-4 py-2 text-xs text-muted-foreground">{r.decidedByName ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>

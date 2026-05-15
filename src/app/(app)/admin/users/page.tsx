@@ -210,27 +210,27 @@ export default async function AdminUsersPage({
 
   return (
     <div className="max-w-6xl">
-      <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
+      <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">
         User Admin
       </h1>
-      <div className="mt-2 mb-6 h-1 w-16 bg-[#FFC726]" />
+      <div className="mt-2 mb-6 h-1 w-12 rounded-full bg-accent" />
 
       {/* Tab strip */}
-      <div className="flex border-b border-zinc-200">
+      <div className="flex border-b border-border">
         {TABS.map((t) => (
           <a
             key={t}
             href={`?tab=${t}`}
-            className={`flex items-center gap-1.5 border-b-2 px-5 py-2.5 text-sm font-semibold uppercase tracking-wide transition-colors -mb-px ${
+            className={`relative flex items-center gap-1.5 px-5 py-2.5 text-sm font-semibold uppercase tracking-wide transition-colors -mb-px ${
               tab === t
-                ? "border-[#00267F] text-[#00267F]"
-                : "border-transparent text-zinc-500 hover:text-zinc-800"
+                ? "text-primary after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-gradient-to-r after:from-primary after:to-accent"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {TAB_LABELS[t]}
             <span
               className={`rounded px-1.5 py-0.5 text-xs ${
-                tab === t ? "bg-[#00267F] text-white" : "bg-zinc-100 text-zinc-600"
+                tab === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
               }`}
             >
               {counts[t]}
@@ -240,7 +240,7 @@ export default async function AdminUsersPage({
       </div>
 
       {/* Table panel */}
-      <div className="rounded-b-lg rounded-tr-lg border border-t-0 border-zinc-200 bg-white">
+      <div className="rounded-b-xl rounded-tr-xl border border-t-0 border-border bg-card shadow-card">
         {tab === "requests"  && <RequestsTable rows={pendingRows} historyRows={historyRows} />}
         {tab === "active"    && <ActiveTable rows={activeRows} approverId={approver.id} />}
         {tab === "suspended" && <SuspendedTable rows={suspendedRows} />}

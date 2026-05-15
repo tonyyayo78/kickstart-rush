@@ -145,14 +145,14 @@ export default async function PublicStandingsPage() {
   return (
     <div>
       {/* Hero band */}
-      <div className="-mx-6 -mt-6 mb-8 bg-[#00267F] px-6 py-6 text-white md:py-8">
+      <div className="-mx-6 -mt-6 mb-8 bg-primary px-6 py-6 text-primary-foreground md:py-8">
         <div className="mx-auto max-w-4xl">
-          <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
+          <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
             BFA U15 Qualifiers 2026
           </h1>
-          <p className="mt-3 text-[#B8C5E8]">
+          <p className="mt-3 text-primary-foreground/70">
             Live standings for Kickstart Elite and Kickstart Premier in the{" "}
-            <span className="text-[#FFC726] font-bold">National Youth Tournament</span>.
+            <span className="text-accent font-bold">National Youth Tournament</span>.
           </p>
         </div>
       </div>
@@ -160,10 +160,10 @@ export default async function PublicStandingsPage() {
       {/* Last match strip */}
       {orderedKickstartTeams.length > 0 && (
         <section className="mb-10">
-          <h2 className="text-xl font-black uppercase tracking-tight">
+          <h2 className="font-display text-xl font-semibold tracking-tight text-foreground">
             Last Match
           </h2>
-          <div className="mt-2 mb-4 h-1 w-12 bg-[#FFC726]" />
+          <div className="mt-2 mb-4 h-1 w-12 rounded-full bg-accent" />
           <div className="flex flex-col gap-2">
             {orderedKickstartTeams.map((teamName) => {
               const result = lastResultByTeam.get(teamName) ?? null;
@@ -173,9 +173,9 @@ export default async function PublicStandingsPage() {
                 <Link
                   key={teamName}
                   href="/public/results"
-                  className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 transition-colors hover:border-[#00267F]"
+                  className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-card transition-shadow hover:shadow-card-hover"
                 >
-                  <span className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-zinc-500">
+                  <span className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                     {label}
                   </span>
 
@@ -185,17 +185,17 @@ export default async function PublicStandingsPage() {
                         <span className="font-black tabular-nums">
                           {result.kickstart_score}–{result.opponent_score}
                         </span>
-                        <span className="ml-2 text-zinc-600">
+                        <span className="ml-2 text-muted-foreground">
                           {result.opponent_name}
                         </span>
                       </span>
                       <FormPills form={[result.outcome]} />
-                      <span className="shrink-0 text-xs text-zinc-400">
+                      <span className="shrink-0 text-xs text-muted-foreground">
                         {formatShortDate(result.kickoff_at)}
                       </span>
                     </>
                   ) : (
-                    <span className="flex-1 text-sm italic text-zinc-400">
+                    <span className="flex-1 text-sm italic text-muted-foreground">
                       No matches played yet
                     </span>
                   )}
@@ -209,35 +209,35 @@ export default async function PublicStandingsPage() {
       {/* Next matches */}
       {upcomingGroups.size > 0 && (
         <section className="mb-10">
-          <h2 className="text-xl font-black uppercase tracking-tight">
+          <h2 className="font-display text-xl font-semibold tracking-tight text-foreground">
             Next Matches
           </h2>
-          <div className="mt-2 mb-4 h-1 w-12 bg-[#FFC726]" />
+          <div className="mt-2 mb-4 h-1 w-12 rounded-full bg-accent" />
           <div className="flex flex-col gap-4">
             {[...upcomingGroups.entries()].map(([dateKey, fixtures]) => (
               <div key={dateKey}>
-                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-zinc-500">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                   {formatDateHeader(fixtures[0].kickoff_at)}
                 </p>
                 <ul className="flex flex-col gap-2">
                   {fixtures.map((f, i) => (
                     <li
                       key={i}
-                      className="flex items-start gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3"
+                      className="flex items-start gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-card"
                     >
-                      <span className="w-16 shrink-0 pt-px text-sm tabular-nums text-zinc-500">
+                      <span className="w-16 shrink-0 pt-px text-sm tabular-nums text-muted-foreground">
                         {formatTime(f.kickoff_at)}
                       </span>
                       <div className="min-w-0 flex-1 text-sm">
-                        <span className={f.home_is_kickstart ? "font-bold text-[#00267F]" : "font-medium"}>
+                        <span className={f.home_is_kickstart ? "font-bold text-primary" : "font-medium text-foreground"}>
                           {f.home_team_name}
                         </span>
-                        <span className="mx-1.5 text-zinc-400">vs</span>
-                        <span className={f.away_is_kickstart ? "font-bold text-[#00267F]" : "font-medium"}>
+                        <span className="mx-1.5 text-muted-foreground/50">vs</span>
+                        <span className={f.away_is_kickstart ? "font-bold text-primary" : "font-medium text-foreground"}>
                           {f.away_team_name}
                         </span>
                         {f.venue && (
-                          <span className="mt-0.5 block text-xs text-zinc-400">
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
                             {f.venue}
                           </span>
                         )}
@@ -250,7 +250,7 @@ export default async function PublicStandingsPage() {
           </div>
           <Link
             href="/public/fixtures"
-            className="mt-4 inline-block text-sm font-medium text-[#00267F] hover:underline"
+            className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
           >
             View all fixtures →
           </Link>
@@ -258,18 +258,18 @@ export default async function PublicStandingsPage() {
       )}
 
       {competitions.size === 0 && (
-        <p className="text-sm text-zinc-500">Standings not yet available.</p>
+        <p className="text-sm text-muted-foreground">Standings not yet available.</p>
       )}
 
       {[...competitions.values()].map((comp) => (
         <section key={comp.name} className="mb-10">
-          <h2 className="mb-3 text-base font-bold uppercase tracking-wide text-zinc-700">
+          <h2 className="mb-3 font-display text-base font-semibold uppercase tracking-wide text-foreground">
             {comp.name}
           </h2>
-          <div className="overflow-x-auto rounded-lg border border-zinc-200">
+          <div className="overflow-x-auto rounded-xl border border-border shadow-card">
             <table className="w-full min-w-[640px] text-sm">
               <thead>
-                <tr className="bg-zinc-100 text-left text-xs font-bold uppercase tracking-wide text-zinc-600">
+                <tr className="bg-muted/40 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <th className="w-8 px-4 py-3">Pos</th>
                   <th className="px-4 py-3">Team</th>
                   <th className="px-4 py-3 text-center">P</th>
@@ -283,18 +283,18 @@ export default async function PublicStandingsPage() {
                   <th className="px-4 py-3">Form</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100">
+              <tbody className="divide-y divide-border bg-card">
                 {comp.rows.map((row, idx) => (
                   <>
                     {idx === 4 && comp.rows.length > 4 && (
                       <tr key="qualification-divider" aria-hidden="true">
                         <td colSpan={11} className="px-4 py-0">
                           <div className="py-1">
-                            <p className="mb-1 text-right text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                            <p className="mb-1 text-right text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                               Super 8 qualification
                             </p>
-                            <div className="border-t border-zinc-300" />
-                            <p className="mt-1 text-right text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                            <div className="border-t border-border" />
+                            <p className="mt-1 text-right text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                               Plate
                             </p>
                           </div>
@@ -303,22 +303,22 @@ export default async function PublicStandingsPage() {
                     )}
                     <tr
                       key={row.team_name}
-                      className={`transition-colors hover:bg-zinc-50 ${row.is_kickstart ? "bg-[#EEF2FF]" : ""}`}
+                      className={`transition-colors hover:bg-muted/30 ${row.is_kickstart ? "bg-primary/5" : ""}`}
                     >
-                      <td className="px-4 py-3 tabular-nums text-zinc-400">
+                      <td className="px-4 py-3 tabular-nums text-muted-foreground">
                         {idx === 0 ? "★" : idx + 1}
                       </td>
-                      <td className={`px-4 py-3 ${row.is_kickstart ? "font-bold text-[#00267F]" : ""}`}>
+                      <td className={`px-4 py-3 ${row.is_kickstart ? "font-bold text-primary" : "text-foreground"}`}>
                         {row.team_name}
                       </td>
-                      <td className="px-4 py-3 text-center tabular-nums">{row.played}</td>
-                      <td className="px-4 py-3 text-center tabular-nums">{row.won}</td>
-                      <td className="px-4 py-3 text-center tabular-nums">{row.drawn}</td>
-                      <td className="px-4 py-3 text-center tabular-nums">{row.lost}</td>
-                      <td className="px-4 py-3 text-center tabular-nums">{row.goals_for}</td>
-                      <td className="px-4 py-3 text-center tabular-nums">{row.goals_against}</td>
-                      <td className="px-4 py-3 text-center tabular-nums">{row.goal_difference}</td>
-                      <td className="px-4 py-3 text-center font-black tabular-nums text-[#FFC726]">
+                      <td className="px-4 py-3 text-center tabular-nums text-muted-foreground">{row.played}</td>
+                      <td className="px-4 py-3 text-center tabular-nums text-muted-foreground">{row.won}</td>
+                      <td className="px-4 py-3 text-center tabular-nums text-muted-foreground">{row.drawn}</td>
+                      <td className="px-4 py-3 text-center tabular-nums text-muted-foreground">{row.lost}</td>
+                      <td className="px-4 py-3 text-center tabular-nums text-muted-foreground">{row.goals_for}</td>
+                      <td className="px-4 py-3 text-center tabular-nums text-muted-foreground">{row.goals_against}</td>
+                      <td className="px-4 py-3 text-center tabular-nums text-muted-foreground">{row.goal_difference}</td>
+                      <td className="px-4 py-3 text-center font-black tabular-nums text-accent">
                         {row.points}
                       </td>
                       <td className="px-4 py-3">

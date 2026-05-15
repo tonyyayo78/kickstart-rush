@@ -33,7 +33,7 @@ export default async function U15Layout({ children }: { children: React.ReactNod
   if (!hasElite && !hasPremier) {
     return (
       <div>
-        <p className="py-16 text-center text-sm text-zinc-400">
+        <p className="py-16 text-center text-sm text-muted-foreground">
           You have not been assigned to any U15 squad.
         </p>
       </div>

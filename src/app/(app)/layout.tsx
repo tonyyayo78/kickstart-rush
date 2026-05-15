@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { signOut } from "@/features/auth/actions";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function AppLayout({
   children,
@@ -47,9 +48,17 @@ export default async function AppLayout({
   const isApprover = profile?.is_approver ?? false;
   const hasSquads = (squadCount ?? 0) > 0;
 
+  const initials = (displayName ?? "?")
+    .split(" ")
+    .map((w: string) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
-    <div className="min-h-screen">
-      <header className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-5 md:px-6 md:py-6">
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-card px-4 shadow-card md:px-6">
+        {/* Left: logo + nav */}
         <div className="flex items-center gap-6">
           <a href="/dashboard" className="hover:opacity-75 transition-opacity shrink-0">
             <Image
@@ -57,46 +66,66 @@ export default async function AppLayout({
               alt="Kickstart Football Club Barbados"
               width={200}
               height={105}
-              className="h-[74px] w-auto sm:h-[105px]"
+              className="h-8 w-auto"
               priority
               unoptimized
             />
           </a>
-          <nav className="flex items-center gap-4 text-sm">
-            <a href="/fixtures" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
-              Fixtures
-            </a>
-            <a href="/fees" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
-              Fees
-            </a>
-            <a href="/standings" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
-              Standings
-            </a>
-            {hasSquads && (
-              <a href="/teams" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
-                Teams
-              </a>
-            )}
+          <nav className="hidden items-center gap-1 text-sm md:flex">
+            <NavLink href="/fixtures">Fixtures</NavLink>
+            <NavLink href="/fees">Fees</NavLink>
+            <NavLink href="/standings">Standings</NavLink>
+            {hasSquads && <NavLink href="/teams">Teams</NavLink>}
             {isApprover && (
-              <a href="/admin/users" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
+              <NavLink href="/admin/users">
+                <span className="mr-1 text-[hsl(var(--accent))]">●</span>
                 User Admin
-              </a>
+              </NavLink>
             )}
           </nav>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="hidden sm:block text-sm text-zinc-600">{displayName}</span>
+
+        {/* Right: theme toggle + avatar */}
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <div className="hidden sm:flex items-center gap-2.5">
+            <span className="text-sm text-muted-foreground">{displayName}</span>
+          </div>
+          <div
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground"
+            title={displayName ?? ""}
+          >
+            {initials}
+          </div>
           <form action={signOut}>
             <button
               type="submit"
-              className="rounded-md border border-zinc-200 px-3 py-1.5 text-sm transition-colors hover:bg-zinc-50"
+              className="rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               Sign out
             </button>
           </form>
         </div>
       </header>
-      <main className="p-6">{children}</main>
+
+      <main className="p-6 animate-in fade-in duration-300">{children}</main>
     </div>
+  );
+}
+
+function NavLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+    >
+      {children}
+    </a>
   );
 }

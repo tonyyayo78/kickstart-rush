@@ -17,13 +17,17 @@ export default async function RequestAccessPage() {
 
   return (
     <div className="max-w-lg">
-      <h1 className="text-2xl font-black uppercase tracking-tight">Request Access</h1>
-      <div className="mt-2 mb-4 h-1 w-16 bg-[#FFC726]" />
-      <p className="mb-6 text-sm text-zinc-600">
-        Coaches, managers, and team staff can request access here. We&apos;ll review and
-        email you a sign-in link once approved.
-      </p>
-      <RequestAccessForm action={submitAccessRequest} squads={squads ?? []} />
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">
+          Request Access
+        </h1>
+        <div className="mt-2 mb-4 h-1 w-12 rounded-full bg-accent" />
+        <p className="mb-6 text-sm text-muted-foreground">
+          Coaches, managers, and team staff can request access here. We&apos;ll review and
+          email you a sign-in link once approved.
+        </p>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+          <RequestAccessForm action={submitAccessRequest} squads={squads ?? []} />
+        </div>
     </div>
   );
 }

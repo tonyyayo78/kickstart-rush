@@ -10,10 +10,10 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_CLS: Record<string, string> = {
-  active: "bg-green-100 text-green-700",
-  injured: "bg-red-100 text-red-700",
-  unavailable: "bg-yellow-100 text-yellow-700",
-  inactive: "bg-zinc-100 text-zinc-500",
+  active:      "bg-success/10 text-success border border-success/20",
+  injured:     "bg-destructive/10 text-destructive border border-destructive/20",
+  unavailable: "bg-warning/10 text-warning-foreground border border-warning/20",
+  inactive:    "bg-muted text-muted-foreground border border-border",
 };
 
 export default async function SquadPlayersPage({
@@ -46,62 +46,62 @@ export default async function SquadPlayersPage({
     <div className="max-w-2xl">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-black uppercase tracking-tight text-black">
+          <h1 className="font-display text-xl font-semibold tracking-tight text-foreground">
             {squad.name}
           </h1>
-          <p className="mt-0.5 text-sm text-zinc-500">
+          <p className="mt-0.5 text-sm text-muted-foreground">
             {players?.length ?? 0} player{players?.length !== 1 ? "s" : ""}
           </p>
         </div>
         <Link
           href={`/squads/${code}/players/new`}
-          className="rounded bg-blue-600 px-4 py-2 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-blue-700"
+          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all duration-150 hover:bg-gradient-to-br hover:from-primary hover:to-[hsl(219_70%_30%)] active:scale-[0.98]"
         >
           Add player
         </Link>
       </div>
 
       {!players?.length ? (
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-muted-foreground">
           No players yet.{" "}
           <Link
             href={`/squads/${code}/players/new`}
-            className="text-blue-600 underline hover:text-blue-700"
+            className="text-primary underline hover:text-primary/80"
           >
             Add the first one.
           </Link>
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-zinc-200">
+        <div className="overflow-x-auto rounded-xl border border-border shadow-card">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-zinc-100 text-left text-xs font-bold uppercase tracking-wide text-zinc-600">
+              <tr className="bg-muted/40 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <th className="px-4 py-3 w-12">#</th>
                 <th className="px-4 py-3">Name</th>
                 <th className="hidden px-4 py-3 sm:table-cell">Position</th>
                 <th className="px-4 py-3">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100">
+            <tbody className="divide-y divide-border bg-card">
               {players.map((p) => (
-                <tr key={p.id} className="transition-colors hover:bg-zinc-50">
-                  <td className="px-4 py-3 font-mono text-right text-zinc-400">
+                <tr key={p.id} className="transition-colors hover:bg-muted/30">
+                  <td className="px-4 py-3 font-mono text-right tabular-nums text-muted-foreground">
                     {p.jersey_number != null ? `#${p.jersey_number}` : "—"}
                   </td>
                   <td className="px-4 py-3">
                     <Link
                       href={`/players/${p.id}`}
-                      className="font-medium hover:text-blue-600 transition-colors"
+                      className="font-medium text-foreground hover:text-primary transition-colors"
                     >
                       {p.display_name}
                     </Link>
                   </td>
-                  <td className="hidden px-4 py-3 text-zinc-500 sm:table-cell">
+                  <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
                     {p.preferred_position}
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`rounded px-2 py-0.5 text-xs font-medium ${STATUS_CLS[p.status] ?? ""}`}
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_CLS[p.status] ?? "bg-muted text-muted-foreground border border-border"}`}
                     >
                       {STATUS_LABEL[p.status] ?? p.status}
                     </span>

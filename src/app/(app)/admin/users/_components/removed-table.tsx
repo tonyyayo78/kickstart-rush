@@ -26,10 +26,10 @@ function SortTh({
 }) {
   const active = sortKey === col;
   return (
-    <th onClick={() => onSort(col)} className="cursor-pointer select-none px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 hover:text-zinc-800">
+    <th onClick={() => onSort(col)} className="cursor-pointer select-none px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground">
       {label}
       <span className="ml-1 font-normal">
-        {active ? (sortDir === "asc" ? "↑" : "↓") : <span className="text-zinc-300">↕</span>}
+        {active ? (sortDir === "asc" ? "↑" : "↓") : <span className="opacity-30">↕</span>}
       </span>
     </th>
   );
@@ -56,22 +56,22 @@ function RowMenu({
 
   return (
     <div ref={ref} className="relative">
-      <button onClick={() => setOpen((o) => !o)} aria-label="Row actions" className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700">
+      <button onClick={() => setOpen((o) => !o)} aria-label="Row actions" className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
         ⋯
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-md border border-zinc-200 bg-white py-1 shadow-lg">
+        <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-lg border border-border bg-popover py-1 shadow-card-elevated">
           <form action={restore} onClick={() => setOpen(false)}>
             <input type="hidden" name="userId" value={user.id} />
-            <button type="submit" className="w-full px-3 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
+            <button type="submit" className="w-full px-3 py-1.5 text-left text-sm text-popover-foreground hover:bg-muted">
               Restore
             </button>
           </form>
-          <div className="my-1 border-t border-zinc-100" />
+          <div className="my-1 border-t border-border" />
           <button
             type="button"
             onClick={() => { setOpen(false); onPurge({ id: user.id, email: user.email }); }}
-            className="w-full px-3 py-1.5 text-left text-sm text-red-600 hover:bg-red-50"
+            className="w-full px-3 py-1.5 text-left text-sm text-destructive hover:bg-destructive/10"
           >
             Purge
           </button>
@@ -120,7 +120,7 @@ export function RemovedTable({ rows }: { rows: RemovedUser[] }) {
     <>
       <PurgeDialog target={purgeTarget} onClose={() => setPurgeTarget(null)} />
       <div>
-        <div className="flex justify-end p-3 border-b border-zinc-100">
+        <div className="flex justify-end p-3 border-b border-border">
           <input
             type="search"
             placeholder="Search…"
@@ -130,33 +130,33 @@ export function RemovedTable({ rows }: { rows: RemovedUser[] }) {
               clearTimeout((window as Window & { _st?: ReturnType<typeof setTimeout> })._st);
               (window as Window & { _st?: ReturnType<typeof setTimeout> })._st = setTimeout(() => setSearch(e.target.value), 200);
             }}
-            className="w-52 rounded-md border border-zinc-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00267F]"
+            className="w-52 rounded-md border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
 
         {sorted.length === 0 ? (
-          <p className="py-16 text-center text-sm text-zinc-400">
+          <p className="py-16 text-center text-sm text-muted-foreground">
             {search ? "No removed users match your search." : "No removed users."}
           </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 z-10 bg-white shadow-sm">
-                <tr className="border-b border-zinc-200 text-left">
+              <thead className="sticky top-0 z-10 bg-card">
+                <tr className="border-b border-border bg-muted/40 text-left">
                   <SortTh col="email"       label="Email"      sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                   <SortTh col="displayName" label="Name"       sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                   <SortTh col="role"        label="Role"       sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                   <SortTh col="removedAt"   label="Removed at" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-zinc-500">Actions</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {sorted.map((u) => (
-                  <tr key={u.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50">
-                    <td className="px-4 py-2 text-zinc-500 line-through">{u.email}</td>
-                    <td className="px-4 py-2 text-zinc-500">{u.displayName}</td>
-                    <td className="px-4 py-2 text-zinc-400">{u.role ?? "—"}</td>
-                    <td className="px-4 py-2 font-mono text-xs text-zinc-400 tabular-nums">{abs(u.removedAt)}</td>
+                  <tr key={u.id} className="border-b border-border last:border-0 hover:bg-muted/30">
+                    <td className="px-4 py-2 text-muted-foreground line-through">{u.email}</td>
+                    <td className="px-4 py-2 text-muted-foreground">{u.displayName}</td>
+                    <td className="px-4 py-2 text-muted-foreground/60">{u.role ?? "—"}</td>
+                    <td className="px-4 py-2 font-mono text-xs text-muted-foreground tabular-nums">{abs(u.removedAt)}</td>
                     <td className="px-4 py-2 text-right">
                       <RowMenu user={u} onPurge={setPurgeTarget} />
                     </td>

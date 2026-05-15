@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -12,42 +13,43 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-zinc-200 bg-white px-4 py-5 md:px-6 md:py-6">
-        <div className="mx-auto flex max-w-4xl items-center justify-between">
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-40 border-b border-border bg-card shadow-card">
+        <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 md:px-6">
           <Link href="/public/fixtures" className="hover:opacity-80 transition-opacity shrink-0">
             <Image
               src="/kickstart-logo.png"
               alt="Kickstart Football Club Barbados"
-              width={240}
-              height={126}
-              className="h-[84px] w-auto sm:h-[126px]"
+              width={200}
+              height={105}
+              className="h-8 w-auto"
               priority
               unoptimized
             />
           </Link>
-          <div className="flex items-center gap-4 sm:gap-6">
-            <nav className="flex items-center gap-4 sm:gap-6 text-sm">
-              <Link href="/public/fixtures" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
+          <div className="flex items-center gap-2">
+            <nav className="flex items-center gap-1 text-sm">
+              <Link href="/public/fixtures" className="rounded-md px-3 py-1.5 font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                 Fixtures
               </Link>
-              <Link href="/public/results" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
+              <Link href="/public/results" className="rounded-md px-3 py-1.5 font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                 Results
               </Link>
-              <Link href="/public/standings" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
+              <Link href="/public/standings" className="rounded-md px-3 py-1.5 font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                 Standings
               </Link>
             </nav>
+            <ThemeToggle size="sm" />
             <Link
               href="/sign-in"
-              className="rounded bg-[#00267F] border-t border-t-[#3349A3] px-4 py-2 text-sm font-bold uppercase tracking-wide text-white shadow-md shadow-[#00267F]/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
+              className="rounded-md bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground transition-all duration-150 hover:bg-gradient-to-br hover:from-primary hover:to-[hsl(219_70%_30%)] active:scale-[0.98]"
             >
               Sign in
             </Link>
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-4xl p-6">{children}</main>
+      <main className="mx-auto max-w-4xl p-6 animate-in fade-in duration-300">{children}</main>
     </div>
   );
 }
