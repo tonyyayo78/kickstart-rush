@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { signOut } from "@/features/auth/actions";
 
 export default async function AppLayout({
@@ -14,6 +15,20 @@ export default async function AppLayout({
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/sign-in");
+
+  // Best-effort heartbeat — throttled to one write per 60s per user
+  try {
+    // eslint-disable-next-line react-hooks/purity
+    const sixtySecondsAgo = new Date(Date.now() - 60_000).toISOString();
+    const now = new Date().toISOString();
+    await createAdminClient()
+      .from("profiles")
+      .update({ last_active_at: now })
+      .eq("id", user.id)
+      .or(`last_active_at.is.null,last_active_at.lt.${sixtySecondsAgo}`);
+  } catch {
+    // swallow — heartbeat failure never blocks a page render
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -60,6 +75,11 @@ export default async function AppLayout({
             {isApprover && (
               <a href="/admin/access-requests" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
                 Requests
+              </a>
+            )}
+            {isApprover && (
+              <a href="/admin/users" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
+                Users
               </a>
             )}
           </nav>
