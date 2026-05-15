@@ -1,103 +1,158 @@
 import { requireApprover } from "@/lib/auth/require-approver";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { UserActions } from "./UserActions";
 import type { User } from "@supabase/supabase-js";
+import { resolveStatus } from "./_components/status-pill";
+import { PendingTable } from "./_components/pending-table";
+import { ActiveTable } from "./_components/active-table";
+import { SuspendedTable } from "./_components/suspended-table";
+import { RemovedTable } from "./_components/removed-table";
 
 type Squad = { code: string; name: string } | null;
-type ProfileTeam = { squad_id: string; squads: Squad };
-type Profile = {
+type ProfileRow = {
   id: string;
   email: string;
   display_name: string | null;
   first_name: string | null;
   role: string | null;
-  status: string | null;
   is_approver: boolean;
   last_active_at: string | null;
-  profile_teams: ProfileTeam[];
+  removed_at: string | null;
+  profile_teams: { squads: Squad }[];
 };
 
-type UserStatus = "suspended" | "invited" | "active-now" | "active" | "idle";
-
-function resolveStatus(profile: Profile, authUser: User | undefined): UserStatus {
-  const now = Date.now();
-  if (authUser?.banned_until && new Date(authUser.banned_until).getTime() > now) {
-    return "suspended";
-  }
-  if (!authUser?.email_confirmed_at) return "invited";
-  if (
-    profile.last_active_at &&
-    now - new Date(profile.last_active_at).getTime() < 5 * 60 * 1000
-  ) {
-    return "active-now";
-  }
-  if (
-    authUser?.last_sign_in_at &&
-    now - new Date(authUser.last_sign_in_at).getTime() < 30 * 24 * 60 * 60 * 1000
-  ) {
-    return "active";
-  }
-  return "idle";
-}
-
-const STATUS_CONFIG: Record<UserStatus, { label: string; cls: string }> = {
-  suspended:   { label: "Suspended",        cls: "bg-red-100 text-red-700" },
-  invited:     { label: "Invited",           cls: "bg-yellow-100 text-yellow-800" },
-  "active-now":{ label: "Active now",        cls: "bg-green-100 text-green-800" },
-  active:      { label: "Active",            cls: "bg-blue-100 text-blue-700" },
-  idle:        { label: "Idle",              cls: "bg-zinc-100 text-zinc-500" },
+type AccessRequestRow = {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  notes: string | null;
+  requested_at: string;
+  access_request_teams: { squads: { name: string } | null }[];
 };
 
-function StatusBadge({ status }: { status: UserStatus }) {
-  const { label, cls } = STATUS_CONFIG[status];
-  return (
-    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${cls}`}>
-      {label}
-    </span>
-  );
+const TABS = ["pending", "active", "suspended", "removed"] as const;
+type Tab = (typeof TABS)[number];
+
+function squadsOf(p: ProfileRow): string {
+  return p.profile_teams.map((t) => t.squads?.code ?? "").filter(Boolean).join(", ");
 }
 
-function formatDate(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  const diffMs = Date.now() - d.getTime();
-  const mins  = Math.floor(diffMs / 60_000);
-  const hours = Math.floor(diffMs / 3_600_000);
-  const days  = Math.floor(diffMs / 86_400_000);
-  if (mins  < 2)   return "just now";
-  if (mins  < 60)  return `${mins}m ago`;
-  if (hours < 24)  return `${hours}h ago`;
-  if (days  < 7)   return `${days}d ago`;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+function displayNameOf(p: ProfileRow): string {
+  return p.display_name ?? p.first_name ?? p.email;
 }
 
-export default async function AdminUsersPage() {
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const approver = await requireApprover();
   const admin = createAdminClient();
 
-  const [{ data: profiles }, { data: authData }] = await Promise.all([
-    admin
-      .from("profiles")
-      .select(
-        "id, email, display_name, first_name, role, status, is_approver, last_active_at, profile_teams(squad_id, squads(code, name))",
-      )
-      .order("display_name", { ascending: true })
-      .returns<Profile[]>(),
-    admin.auth.admin.listUsers({ perPage: 1000 }),
-  ]);
+  const [{ data: profiles }, { data: authData }, { data: pendingReqs }] =
+    await Promise.all([
+      admin
+        .from("profiles")
+        .select(
+          "id, email, display_name, first_name, role, is_approver, last_active_at, removed_at, profile_teams(squads(code,name))",
+        )
+        .order("display_name", { ascending: true })
+        .returns<ProfileRow[]>(),
+      admin.auth.admin.listUsers({ perPage: 1000 }),
+      admin
+        .from("access_requests")
+        .select(
+          "id, email, first_name, last_name, role, notes, requested_at, access_request_teams(squads(name))",
+        )
+        .eq("status", "pending")
+        .order("requested_at", { ascending: true })
+        .returns<AccessRequestRow[]>(),
+    ]);
 
-  const authById = new Map<string, User>(
-    (authData?.users ?? []).map((u) => [u.id, u]),
-  );
+  const allProfiles = profiles ?? [];
+  const authUsers: User[] = authData?.users ?? [];
+  const pending = pendingReqs ?? [];
 
-  const rows = (profiles ?? []).map((p) => ({
-    profile: p,
-    authUser: authById.get(p.id),
-    status: resolveStatus(p, authById.get(p.id)),
-    squads: p.profile_teams
-      .map((t) => t.squads?.code ?? t.squad_id)
-      .join(", ") || "—",
-    displayName: p.display_name ?? p.first_name ?? p.email,
+  const authById = new Map<string, User>(authUsers.map((u) => [u.id, u]));
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
+
+  const nonRemoved = allProfiles.filter((p) => !p.removed_at);
+  const removed = allProfiles.filter((p) => !!p.removed_at);
+
+  const suspended = nonRemoved.filter((p) => {
+    const a = authById.get(p.id);
+    return a?.banned_until && new Date(a.banned_until).getTime() > now;
+  });
+
+  const active = nonRemoved.filter((p) => {
+    const a = authById.get(p.id);
+    return !a?.banned_until || new Date(a.banned_until).getTime() <= now;
+  });
+
+  const counts: Record<Tab, number> = {
+    pending: pending.length,
+    active: active.length,
+    suspended: suspended.length,
+    removed: removed.length,
+  };
+
+  const { tab: rawTab = "" } = await searchParams;
+  const tab: Tab =
+    TABS.includes(rawTab as Tab)
+      ? (rawTab as Tab)
+      : counts.pending > 0
+        ? "pending"
+        : "active";
+
+  // Build table-specific data shapes
+
+  const pendingRows = pending.map((r) => ({
+    id: r.id,
+    email: r.email,
+    first_name: r.first_name,
+    last_name: r.last_name,
+    role: r.role,
+    notes: r.notes,
+    requested_at: r.requested_at,
+    squads: r.access_request_teams.map((t) => t.squads?.name ?? "").filter(Boolean).join(", "),
+  }));
+
+  const activeRows = active.map((p) => {
+    const a = authById.get(p.id);
+    return {
+      id: p.id,
+      email: p.email,
+      displayName: displayNameOf(p),
+      role: p.role,
+      isApprover: p.is_approver,
+      squads: squadsOf(p),
+      lastActiveAt: p.last_active_at,
+      lastSignInAt: a?.last_sign_in_at ?? null,
+      status: resolveStatus(a?.banned_until, a?.email_confirmed_at, p.last_active_at, a?.last_sign_in_at),
+    };
+  });
+
+  const suspendedRows = suspended.map((p) => {
+    const a = authById.get(p.id);
+    return {
+      id: p.id,
+      email: p.email,
+      displayName: displayNameOf(p),
+      role: p.role,
+      squads: squadsOf(p),
+      bannedUntil: a?.banned_until ?? null,
+      lastSignInAt: a?.last_sign_in_at ?? null,
+    };
+  });
+
+  const removedRows = removed.map((p) => ({
+    id: p.id,
+    email: p.email,
+    displayName: displayNameOf(p),
+    role: p.role,
+    removedAt: p.removed_at,
   }));
 
   return (
@@ -105,59 +160,40 @@ export default async function AdminUsersPage() {
       <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
         Users
       </h1>
-      <div className="mt-2 mb-8 h-1 w-16 bg-[#FFC726]" />
+      <div className="mt-2 mb-6 h-1 w-16 bg-[#FFC726]" />
 
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wide text-zinc-500">
-              <th className="px-4 py-3 font-semibold">Name / Email</th>
-              <th className="px-4 py-3 font-semibold">Role</th>
-              <th className="px-4 py-3 font-semibold">Squads</th>
-              <th className="px-4 py-3 font-semibold">Status</th>
-              <th className="px-4 py-3 font-semibold">Last sign-in</th>
-              <th className="px-4 py-3 font-semibold">Last active</th>
-              <th className="px-4 py-3 font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(({ profile, authUser, status, squads, displayName }) => (
-              <tr
-                key={profile.id}
-                className="border-b border-zinc-100 last:border-0"
-              >
-                <td className="px-4 py-3">
-                  <p className="font-semibold text-zinc-900">{displayName}</p>
-                  <p className="text-xs text-zinc-400">{profile.email}</p>
-                </td>
-                <td className="px-4 py-3 text-zinc-600">
-                  {profile.is_approver ? (
-                    <span className="text-xs font-semibold text-[#00267F]">Approver</span>
-                  ) : (
-                    profile.role ?? "—"
-                  )}
-                </td>
-                <td className="px-4 py-3 text-zinc-600">{squads}</td>
-                <td className="px-4 py-3">
-                  <StatusBadge status={status} />
-                </td>
-                <td className="px-4 py-3 text-zinc-500 text-xs">
-                  {formatDate(authUser?.last_sign_in_at)}
-                </td>
-                <td className="px-4 py-3 text-zinc-500 text-xs">
-                  {formatDate(profile.last_active_at)}
-                </td>
-                <td className="px-4 py-3">
-                  <UserActions
-                    userId={profile.id}
-                    isSuspended={status === "suspended"}
-                    isSelf={profile.id === approver.id}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Tab strip */}
+      <div className="flex border-b border-zinc-200">
+        {TABS.map((t) => (
+          <a
+            key={t}
+            href={`?tab=${t}`}
+            className={`flex items-center gap-1.5 border-b-2 px-5 py-2.5 text-sm font-semibold uppercase tracking-wide transition-colors -mb-px ${
+              tab === t
+                ? "border-[#00267F] text-[#00267F]"
+                : "border-transparent text-zinc-500 hover:text-zinc-800"
+            }`}
+          >
+            {t.charAt(0).toUpperCase() + t.slice(1)}
+            <span
+              className={`rounded px-1.5 py-0.5 text-xs ${
+                tab === t
+                  ? "bg-[#00267F] text-white"
+                  : "bg-zinc-100 text-zinc-600"
+              }`}
+            >
+              {counts[t]}
+            </span>
+          </a>
+        ))}
+      </div>
+
+      {/* Table panel */}
+      <div className="rounded-b-lg rounded-tr-lg border border-t-0 border-zinc-200 bg-white">
+        {tab === "pending" && <PendingTable rows={pendingRows} />}
+        {tab === "active" && <ActiveTable rows={activeRows} approverId={approver.id} />}
+        {tab === "suspended" && <SuspendedTable rows={suspendedRows} />}
+        {tab === "removed" && <RemovedTable rows={removedRows} />}
       </div>
     </div>
   );
