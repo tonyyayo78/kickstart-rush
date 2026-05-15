@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -16,15 +16,7 @@ export default function PublicLayout({
       <header className="border-b border-zinc-200 bg-white px-4 py-5 md:px-6 md:py-6">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <Link href="/public/fixtures" className="hover:opacity-80 transition-opacity shrink-0">
-            <Image
-              src="/kickstart-logo.png"
-              alt="Kickstart Football Club Barbados"
-              width={240}
-              height={126}
-              className="h-[84px] w-auto sm:h-[126px]"
-              priority
-              unoptimized
-            />
+            <Logo className="h-10 md:h-12" priority />
           </Link>
           <div className="flex items-center gap-4 sm:gap-6">
             <nav className="flex items-center gap-4 sm:gap-6 text-sm">
