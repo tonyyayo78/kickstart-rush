@@ -30,7 +30,7 @@ export async function sendInviteEmail({
       <table width="100%" style="max-width:520px;background:#ffffff;border-radius:8px;overflow:hidden">
         <tr>
           <td style="background:#00267F;padding:24px 32px">
-            <p style="margin:0;color:#FFC726;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Kickstart RUSH FC</p>
+            <p style="margin:0;color:#FFC726;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Kickstart Rush Football Club</p>
           </td>
         </tr>
         <tr>

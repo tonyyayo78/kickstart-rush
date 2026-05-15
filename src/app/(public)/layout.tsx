@@ -19,7 +19,7 @@ export default function PublicLayout({
           <Link href="/public/fixtures" className="hover:opacity-80 transition-opacity shrink-0">
             <Image
               src="/kickstart-logo.png"
-              alt="Kickstart Football Club Barbados"
+              alt="Kickstart Rush Football Club"
               width={200}
               height={105}
               className="h-8 w-auto"

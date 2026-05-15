@@ -23,8 +23,8 @@ const mono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kickstart Football Club Barbados",
-  description: "Club operations for Kickstart FC Barbados",
+  title: "Kickstart Rush Football Club",
+  description: "Club operations for Kickstart Rush Football Club",
 };
 
 export default function RootLayout({

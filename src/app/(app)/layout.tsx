@@ -63,7 +63,7 @@ export default async function AppLayout({
           <a href="/dashboard" className="hover:opacity-75 transition-opacity shrink-0">
             <Image
               src="/kickstart-logo.png"
-              alt="Kickstart Football Club Barbados"
+              alt="Kickstart Rush Football Club"
               width={200}
               height={105}
               className="h-8 w-auto"

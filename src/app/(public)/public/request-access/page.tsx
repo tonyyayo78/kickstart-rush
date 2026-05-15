@@ -4,7 +4,7 @@ import { submitAccessRequest } from "@/features/access-requests/actions";
 import RequestAccessForm from "@/features/access-requests/RequestAccessForm";
 
 export const metadata: Metadata = {
-  title: "Request Access — Kickstart FC",
+  title: "Request Access — Kickstart Rush FC",
 };
 
 export default async function RequestAccessPage() {

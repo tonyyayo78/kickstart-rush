@@ -25,7 +25,7 @@ export default function SignInPage() {
           <a href="/public/standings">
             <Image
               src="/kickstart-logo.png"
-              alt="Kickstart Football Club Barbados"
+              alt="Kickstart Rush Football Club"
               width={200}
               height={105}
               className="h-12 w-auto"

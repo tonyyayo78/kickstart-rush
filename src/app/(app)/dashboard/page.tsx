@@ -50,7 +50,7 @@ export default async function DashboardPage() {
           Welcome back, {name}
         </h1>
         <p className="mt-2 text-primary-foreground/70 text-sm">
-          Kickstart Football Club Barbados — U15 Operations
+          Kickstart Rush Football Club — U15 Operations
         </p>
       </div>
 
