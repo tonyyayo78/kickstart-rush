@@ -38,8 +38,14 @@ export default async function AppLayout({
 
   if (profile?.must_change_password) redirect("/auth/set-password");
 
+  const { count: squadCount } = await supabase
+    .from("profile_teams")
+    .select("id", { count: "exact", head: true })
+    .eq("profile_id", user.id);
+
   const displayName = profile?.display_name ?? profile?.email ?? user.email;
   const isApprover = profile?.is_approver ?? false;
+  const hasSquads = (squadCount ?? 0) > 0;
 
   return (
     <div className="min-h-screen">
@@ -66,12 +72,11 @@ export default async function AppLayout({
             <a href="/standings" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
               Standings
             </a>
-            <a href="/squads/KE2026/players" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
-              Elite
-            </a>
-            <a href="/squads/KP2026/players" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
-              Premier
-            </a>
+            {hasSquads && (
+              <a href="/teams" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
+                Teams
+              </a>
+            )}
             {isApprover && (
               <a href="/admin/users" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
                 User Admin
