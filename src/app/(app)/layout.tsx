@@ -1,8 +1,8 @@
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { signOut } from "@/features/auth/actions";
+import { Logo } from "@/components/logo";
 
 export default async function AppLayout({
   children,
@@ -52,15 +52,7 @@ export default async function AppLayout({
       <header className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-5 md:px-6 md:py-6">
         <div className="flex items-center gap-6">
           <a href="/dashboard" className="hover:opacity-75 transition-opacity shrink-0">
-            <Image
-              src="/kickstart-logo.png"
-              alt="Kickstart Football Club Barbados"
-              width={200}
-              height={105}
-              className="h-[74px] w-auto sm:h-[105px]"
-              priority
-              unoptimized
-            />
+            <Logo className="h-10 md:h-12" priority />
           </a>
           <nav className="flex items-center gap-4 text-sm">
             <a href="/fixtures" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
