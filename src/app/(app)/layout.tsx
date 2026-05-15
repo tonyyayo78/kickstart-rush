@@ -73,13 +73,8 @@ export default async function AppLayout({
               Premier
             </a>
             {isApprover && (
-              <a href="/admin/access-requests" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
-                Requests
-              </a>
-            )}
-            {isApprover && (
               <a href="/admin/users" className="font-bold uppercase tracking-wide text-zinc-700 hover:text-[#00267F] transition-colors">
-                Users
+                User Admin
               </a>
             )}
           </nav>

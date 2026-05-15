@@ -13,6 +13,18 @@ export type PendingRequest = {
   squads: string;
 };
 
+export type DecidedRequest = {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  status: string;
+  decided_at: string | null;
+  squads: string;
+  decidedByName: string | null;
+};
+
 type SortKey = "requested_at" | "first_name" | "email" | "role";
 
 function rel(iso: string): string {
@@ -31,17 +43,22 @@ function abs(iso: string): string {
   return new Date(iso).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
 }
 
+function DecidedPill({ status }: { status: string }) {
+  const cls =
+    status === "approved"
+      ? "bg-green-100 text-green-800"
+      : "bg-zinc-100 text-zinc-500";
+  return (
+    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${cls}`}>
+      {status}
+    </span>
+  );
+}
+
 function SortTh({
-  col,
-  label,
-  sortKey,
-  sortDir,
-  onSort,
+  col, label, sortKey, sortDir, onSort,
 }: {
-  col: SortKey;
-  label: string;
-  sortKey: SortKey;
-  sortDir: "asc" | "desc";
+  col: SortKey; label: string; sortKey: SortKey; sortDir: "asc" | "desc";
   onSort: (col: SortKey) => void;
 }) {
   const active = sortKey === col;
@@ -58,7 +75,13 @@ function SortTh({
   );
 }
 
-export function PendingTable({ rows }: { rows: PendingRequest[] }) {
+export function RequestsTable({
+  rows,
+  historyRows,
+}: {
+  rows: PendingRequest[];
+  historyRows: DecidedRequest[];
+}) {
   const [sortKey, setSortKey] = useState<SortKey>("requested_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [rawSearch, setRawSearch] = useState("");
@@ -87,7 +110,7 @@ export function PendingTable({ rows }: { rows: PendingRequest[] }) {
       const v = (r: PendingRequest) =>
         sortKey === "requested_at" ? r.requested_at
         : sortKey === "first_name" ? `${r.first_name} ${r.last_name}`
-        : sortKey === "email" ? r.email
+        : sortKey === "email"      ? r.email
         : r.role;
       const cmp = v(a).localeCompare(v(b));
       return sortDir === "asc" ? cmp : -cmp;
@@ -96,6 +119,7 @@ export function PendingTable({ rows }: { rows: PendingRequest[] }) {
 
   return (
     <div>
+      {/* Pending */}
       <div className="flex justify-end p-3 border-b border-zinc-100">
         <input
           type="search"
@@ -104,7 +128,10 @@ export function PendingTable({ rows }: { rows: PendingRequest[] }) {
           onChange={(e) => {
             setRawSearch(e.target.value);
             clearTimeout((window as Window & { _st?: ReturnType<typeof setTimeout> })._st);
-            (window as Window & { _st?: ReturnType<typeof setTimeout> })._st = setTimeout(() => setSearch(e.target.value), 200);
+            (window as Window & { _st?: ReturnType<typeof setTimeout> })._st = setTimeout(
+              () => setSearch(e.target.value),
+              200,
+            );
           }}
           className="w-52 rounded-md border border-zinc-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00267F]"
         />
@@ -112,7 +139,7 @@ export function PendingTable({ rows }: { rows: PendingRequest[] }) {
 
       {sorted.length === 0 ? (
         <p className="py-16 text-center text-sm text-zinc-400">
-          {search ? "No requests match your search." : "No pending requests."}
+          {search ? "No requests match your search." : "No pending requests. New requests will appear here."}
         </p>
       ) : (
         <div className="overflow-x-auto">
@@ -123,20 +150,14 @@ export function PendingTable({ rows }: { rows: PendingRequest[] }) {
                 <SortTh col="first_name"   label="Name"      sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                 <SortTh col="email"        label="Email"     sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                 <SortTh col="role"         label="Role"      sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                  Squads
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                  Message
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                  Actions
-                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Squads</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Message</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-zinc-500">Actions</th>
               </tr>
             </thead>
             <tbody>
               {sorted.map((r) => (
-                <tr key={r.id} className="border-b border-zinc-100 last:border-0 hover:bg-muted/50">
+                <tr key={r.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50">
                   <td className="px-4 py-2 font-mono text-xs text-zinc-500 tabular-nums" title={abs(r.requested_at)}>
                     {rel(r.requested_at)}
                   </td>
@@ -176,6 +197,49 @@ export function PendingTable({ rows }: { rows: PendingRequest[] }) {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Decided history */}
+      {historyRows.length > 0 && (
+        <details className="border-t border-zinc-200">
+          <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 hover:text-zinc-800">
+            Decided recently ({historyRows.length})
+          </summary>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wide text-zinc-500">
+                  <th className="px-4 py-3 font-semibold">Name</th>
+                  <th className="px-4 py-3 font-semibold">Email</th>
+                  <th className="px-4 py-3 font-semibold">Role</th>
+                  <th className="px-4 py-3 font-semibold">Squads</th>
+                  <th className="px-4 py-3 font-semibold">Decision</th>
+                  <th className="px-4 py-3 font-semibold">Decided</th>
+                  <th className="px-4 py-3 font-semibold">By</th>
+                </tr>
+              </thead>
+              <tbody>
+                {historyRows.map((r) => (
+                  <tr key={r.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50">
+                    <td className="px-4 py-2 font-medium text-zinc-900">
+                      {r.first_name} {r.last_name}
+                    </td>
+                    <td className="px-4 py-2 text-zinc-600">{r.email}</td>
+                    <td className="px-4 py-2 text-zinc-600">{r.role}</td>
+                    <td className="px-4 py-2 text-zinc-600">{r.squads || "—"}</td>
+                    <td className="px-4 py-2">
+                      <DecidedPill status={r.status} />
+                    </td>
+                    <td className="px-4 py-2 font-mono text-xs text-zinc-500 tabular-nums" title={r.decided_at ? abs(r.decided_at) : ""}>
+                      {r.decided_at ? rel(r.decided_at) : "—"}
+                    </td>
+                    <td className="px-4 py-2 text-xs text-zinc-400">{r.decidedByName ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
       )}
     </div>
   );
