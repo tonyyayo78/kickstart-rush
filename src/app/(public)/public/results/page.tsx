@@ -36,6 +36,7 @@ export default async function PublicResultsPage() {
   if (!results?.length) {
     return (
       <div>
+        <RealtimePublicRefresh />
         <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
           Results
         </h1>
