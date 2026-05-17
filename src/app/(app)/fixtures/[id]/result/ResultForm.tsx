@@ -221,8 +221,6 @@ export default function ResultForm({
       homeScore,
       awayScore,
       matchNotes: matchNotes.trim() || undefined,
-      homeTeamId: homeTeam.id,
-      awayTeamId: awayTeam.id,
       scorers: scorers.map((s) => ({
         competitionTeamId: s.competitionTeamId,
         playerId: s.playerId || null,
