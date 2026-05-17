@@ -43,6 +43,7 @@ type UpcomingFixture = {
 type LastResult = {
   kickstart_team_id: string;
   kickstart_team_name: string;
+  competition_code: string;
   opponent_name: string;
   kickoff_at: string;
   kickstart_score: number;
@@ -160,26 +161,14 @@ export default async function PublicStandingsPage({
     upcomingGroups.get(key)!.push(f);
   }
 
-  // Build a competition-code lookup for ALL Kickstart teams (unfiltered) so
-  // Last Match can label and sort rows by age group regardless of the active filter.
-  const kickstartTeamCompCode = new Map<string, string>();
-  for (const row of rows ?? []) {
-    if (row.is_kickstart) kickstartTeamCompCode.set(row.team_name, row.competition_code);
-  }
-
-  // Last Match shows the most recent result for each Kickstart squad in the
-  // selected age group. Blank when no results have been recorded for that group yet.
+  // Last Match: filter to the active age group using competition_code carried
+  // directly by each view row — no Map lookup needed.
   const AGE_ORDER: Record<string, number> = { U9: 1, U11: 2, U13: 3, U15: 4, U17: 5 };
   const sortedLastResults = [...(lastResultsRaw ?? [])]
-    .filter((r) => {
-      const code = kickstartTeamCompCode.get(r.kickstart_team_name) ?? "";
-      return matchesAgeFilter(code, filter);
-    })
+    .filter((r) => matchesAgeFilter(r.competition_code, filter))
     .sort((a, b) => {
-      const codeA = kickstartTeamCompCode.get(a.kickstart_team_name) ?? "";
-      const codeB = kickstartTeamCompCode.get(b.kickstart_team_name) ?? "";
-      const ageA = ageGroupFromCompetitionCode(codeA);
-      const ageB = ageGroupFromCompetitionCode(codeB);
+      const ageA = ageGroupFromCompetitionCode(a.competition_code);
+      const ageB = ageGroupFromCompetitionCode(b.competition_code);
       return (AGE_ORDER[ageA ?? ""] ?? 99) - (AGE_ORDER[ageB ?? ""] ?? 99);
     });
 
@@ -225,8 +214,7 @@ export default async function PublicStandingsPage({
           <div className="mt-3 mb-4 h-1 w-12 bg-[#FFC726]" />
           <div className="flex flex-col gap-2">
             {sortedLastResults.map((result) => {
-              const compCode = kickstartTeamCompCode.get(result.kickstart_team_name) ?? "";
-              const label = squadShortLabel(result.kickstart_team_name, compCode);
+              const label = squadShortLabel(result.kickstart_team_name, result.competition_code);
 
               return (
                 <Link
