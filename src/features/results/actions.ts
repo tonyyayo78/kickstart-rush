@@ -28,6 +28,16 @@ const resultSchema = z.object({
   // homeTeamId / awayTeamId removed — looked up server-side from the fixture.
 });
 
+// Public pages are Server Components without realtime subscriptions.
+// Whenever result data changes, invalidate the public route caches so
+// the next visitor sees fresh data immediately. True live-streaming
+// (Supabase Realtime) is queued as Brief 22.
+function revalidatePublic() {
+  revalidatePath("/public/standings");
+  revalidatePath("/public/fixtures");
+  revalidatePath("/public/results");
+}
+
 export type ResultActionState = { error: string } | null;
 
 export async function createResult(
@@ -130,6 +140,7 @@ export async function createResult(
   revalidatePath(`/fixtures/${fixtureId}/result`);
   revalidatePath("/fixtures");
   revalidatePath("/standings");
+  revalidatePublic();
   redirect(`/fixtures/${fixtureId}/result`);
 }
 
@@ -229,6 +240,7 @@ export async function updateResult(
   revalidatePath(`/fixtures/${fixtureId}/result`);
   revalidatePath("/fixtures");
   revalidatePath("/standings");
+  revalidatePublic();
   redirect(`/fixtures/${fixtureId}/result`);
 }
 
@@ -249,5 +261,6 @@ export async function deleteResult(
   revalidatePath(`/fixtures/${fixtureId}/result`);
   revalidatePath("/fixtures");
   revalidatePath("/standings");
+  revalidatePublic();
   redirect("/fixtures");
 }

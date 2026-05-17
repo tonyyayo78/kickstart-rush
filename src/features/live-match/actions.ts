@@ -18,6 +18,16 @@ function live(fixtureId: string) {
   revalidatePath(`/fixtures/${fixtureId}/live`);
 }
 
+// Public pages are Server Components without realtime subscriptions.
+// Whenever match data changes, invalidate the public route caches so
+// the next visitor sees fresh data immediately. True live-streaming
+// (Supabase Realtime) is queued as Brief 22.
+function revalidatePublic() {
+  revalidatePath("/public/standings");
+  revalidatePath("/public/fixtures");
+  revalidatePath("/public/results");
+}
+
 // ── Ensure a results row exists, return its id ───────────────
 async function ensureResult(
   supabase: Awaited<ReturnType<typeof authed>>,
@@ -50,6 +60,7 @@ export async function kickOff(fixtureId: string): Promise<ActionResult> {
 
   await ensureResult(supabase, fixtureId);
   live(fixtureId);
+  revalidatePublic();
   return null;
 }
 
@@ -67,6 +78,7 @@ export async function setStoppage(
     .eq("id", fixtureId);
   if (error) return { error: "Failed to set stoppage." };
   live(fixtureId);
+  revalidatePublic();
   return null;
 }
 
@@ -78,6 +90,7 @@ export async function endFirstHalf(fixtureId: string): Promise<ActionResult> {
     .eq("id", fixtureId);
   if (error) return { error: "Failed to end first half." };
   live(fixtureId);
+  revalidatePublic();
   return null;
 }
 
@@ -89,6 +102,7 @@ export async function startSecondHalf(fixtureId: string): Promise<ActionResult> 
     .eq("id", fixtureId);
   if (error) return { error: "Failed to start second half." };
   live(fixtureId);
+  revalidatePublic();
   return null;
 }
 
@@ -132,6 +146,7 @@ export async function endMatch(fixtureId: string): Promise<ActionResult> {
 
   revalidatePath(`/fixtures/${fixtureId}/live`);
   revalidatePath(`/fixtures/${fixtureId}/result`);
+  revalidatePublic();
   return null;
 }
 
@@ -144,6 +159,7 @@ export async function reopenMatch(fixtureId: string): Promise<ActionResult> {
   if (error) return { error: "Failed to reopen match." };
   revalidatePath(`/fixtures/${fixtureId}/live`);
   revalidatePath(`/fixtures/${fixtureId}/result`);
+  revalidatePublic();
   return null;
 }
 
@@ -180,6 +196,7 @@ export async function logGoal(
   });
   if (error) return { error: "Failed to log goal." };
   live(fixtureId);
+  revalidatePublic();
   return null;
 }
 
@@ -191,6 +208,7 @@ export async function deleteGoal(
   const { error } = await supabase.from("goals").delete().eq("id", goalId);
   if (error) return { error: "Failed to delete goal." };
   live(fixtureId);
+  revalidatePublic();
   return null;
 }
 
@@ -216,5 +234,6 @@ export async function updateGoal(
     .eq("id", goalId);
   if (error) return { error: "Failed to update goal." };
   live(fixtureId);
+  revalidatePublic();
   return null;
 }

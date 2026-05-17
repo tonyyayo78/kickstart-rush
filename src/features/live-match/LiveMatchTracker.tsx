@@ -170,6 +170,19 @@ export default function LiveMatchTracker({
     return () => clearInterval(id);
   }, [matchState]);
 
+  // Re-fetch server state whenever the tab/page becomes visible again.
+  // Covers browser bfcache, tab switching, and mobile-app resume —
+  // without it, returning to the page can show stale match_state
+  // (e.g., a "Kick Off" button after kickoff actually happened).
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState === "visible") {
+        router.refresh();
+      }
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [router]);
 
   // Close player picker on outside click
   useEffect(() => {
