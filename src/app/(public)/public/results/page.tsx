@@ -1,5 +1,6 @@
 import { createAnonPublicClient } from "@/lib/supabase/anon-public";
 import CardPill from "@/components/CardPill";
+import RealtimePublicRefresh from "@/features/public-realtime/RealtimePublicRefresh";
 
 type Scorer = {
   team_name: string;
@@ -48,6 +49,7 @@ export default async function PublicResultsPage() {
 
   return (
     <div>
+      <RealtimePublicRefresh />
       <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
         Results
       </h1>

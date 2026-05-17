@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createAnonPublicClient } from "@/lib/supabase/anon-public";
 import FormPills from "@/components/FormPills";
+import RealtimePublicRefresh from "@/features/public-realtime/RealtimePublicRefresh";
 
 const BARBADOS_TZ = "America/Barbados";
 
@@ -144,6 +145,7 @@ export default async function PublicStandingsPage() {
 
   return (
     <div>
+      <RealtimePublicRefresh />
       {/* Hero band */}
       <div className="-mx-6 -mt-6 mb-8 bg-[#00267F] px-6 py-6 text-white md:py-8">
         <div className="mx-auto max-w-4xl">
