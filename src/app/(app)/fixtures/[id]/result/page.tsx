@@ -241,6 +241,12 @@ export default async function ResultPage({
               {existingResult ? "Edit lineup →" : "Set lineup →"}
             </Link>
             <Link
+              href={`/fixtures/${id}/team-sheet`}
+              className="text-xs font-medium text-[#00267F] hover:underline"
+            >
+              Team Sheet →
+            </Link>
+            <Link
               href={`/fixtures/${id}/fees`}
               className="text-xs font-medium text-[#00267F] hover:underline"
             >

@@ -1,0 +1,458 @@
+/* ─── CSS custom properties ────────────────────────────── */
+.sheet {
+  --bfa-navy: #003d7a;
+  --bfa-navy-dark: #001f40;
+  --bfa-yellow: #ffc72c;
+  --ink: #0a0a0a;
+  --rule: #1a1a1a;
+  --rule-soft: #d4d4d4;
+
+  width: 210mm;
+  min-height: 297mm;
+  margin: 16px auto;
+  padding: 12mm 12mm 10mm 12mm;
+  background: white;
+  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.08);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  color: var(--ink);
+}
+
+/* ─── Masthead ─────────────────────────────────────────── */
+.masthead {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--bfa-navy);
+  position: relative;
+}
+
+.masthead::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -7px;
+  height: 2px;
+  background: var(--bfa-yellow);
+}
+
+.nycImg {
+  display: block;
+  height: 86px;
+  width: auto;
+  object-fit: contain;
+}
+
+.bfaImg {
+  display: block;
+  height: 92px;
+  width: auto;
+  object-fit: contain;
+}
+
+.centerMark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.eyebrow {
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--bfa-navy);
+  margin-bottom: 4px;
+  display: block;
+}
+
+.tournamentName {
+  font-family: var(--font-bebas), "Bebas Neue", sans-serif;
+  font-weight: 400;
+  font-size: 26px;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  color: var(--ink);
+  display: block;
+}
+
+.ageLabel {
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: 0.32em;
+  color: var(--bfa-navy);
+  margin-top: 4px;
+  display: block;
+}
+
+/* ─── Title block ──────────────────────────────────────── */
+.titleBlock {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  margin-top: 14px;
+  margin-bottom: 12px;
+}
+
+.titleBlock h1 {
+  font-family: var(--font-bebas), "Bebas Neue", sans-serif;
+  font-weight: 400;
+  font-size: 62px;
+  line-height: 0.92;
+  letter-spacing: 0.03em;
+  margin: 0;
+  color: var(--bfa-navy);
+}
+
+.instructions {
+  font-size: 9.5px;
+  color: #444;
+  margin-top: 6px;
+  line-height: 1.4;
+  max-width: 380px;
+}
+
+.matchBox {
+  border: 2px solid var(--bfa-navy);
+  width: 80px;
+  height: 64px;
+  display: grid;
+  grid-template-rows: 18px 1fr;
+}
+
+.matchBoxLabel {
+  background: var(--bfa-navy);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 3px 0;
+}
+
+.matchBoxVal {
+  font-family: var(--font-mono), "JetBrains Mono", monospace;
+  font-size: 22px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Meta strip ───────────────────────────────────────── */
+.meta {
+  border: 1px solid var(--rule);
+  margin-bottom: 6px;
+}
+
+.metaRow {
+  display: grid;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.metaRow:last-child {
+  border-bottom: 0;
+}
+
+.metaRowTeams {
+  grid-template-columns: 1fr 1fr;
+}
+
+.metaRowWhere {
+  grid-template-columns: 2fr 1fr 1fr;
+}
+
+.metaRowHt {
+  grid-template-columns: 1fr 1fr;
+}
+
+.metaRowRefs {
+  grid-template-columns: 1fr 1fr;
+}
+
+.metaCell {
+  padding: 7px 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  border-right: 1px solid var(--rule-soft);
+  min-height: 32px;
+}
+
+.metaCell:last-child {
+  border-right: 0;
+}
+
+.metaLbl {
+  font-weight: 800;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bfa-navy);
+  flex-shrink: 0;
+  min-width: 78px;
+}
+
+.metaVal {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ink);
+  flex: 1;
+  border-bottom: 1px dotted #888;
+  padding-bottom: 1px;
+  min-width: 0;
+}
+
+.metaVal:empty::after {
+  content: "\00a0";
+}
+
+/* Teams row overrides */
+.metaRowTeams .metaCell {
+  background: linear-gradient(180deg, #f7f9fc 0%, #ffffff 100%);
+}
+
+.metaRowTeams .metaLbl {
+  color: var(--bfa-navy-dark);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+}
+
+.metaRowTeams .metaVal {
+  font-family: var(--font-bebas), "Bebas Neue", sans-serif;
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  color: var(--bfa-navy);
+  border-bottom: 0;
+}
+
+/* ─── Players table ────────────────────────────────────── */
+.playersTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.playersTable thead th {
+  background: var(--bfa-navy);
+  color: white;
+  font-weight: 800;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 6px;
+  text-align: left;
+  border-right: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.playersTable thead th:last-child {
+  border-right: 0;
+}
+
+.thNum {
+  width: 28px;
+  text-align: center !important;
+}
+
+.thPlayer {
+  width: 38%;
+}
+
+.thGoals {
+  width: 50px;
+  text-align: center !important;
+}
+
+.thTime {
+  width: 18%;
+}
+
+.thCaut {
+  width: 14%;
+}
+
+.thExp {
+  width: 14%;
+}
+
+.playersTable tbody td {
+  border: 1px solid var(--rule);
+  height: 22px;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  vertical-align: middle;
+}
+
+.tdNum {
+  text-align: center;
+  font-family: var(--font-mono), "JetBrains Mono", monospace;
+  font-size: 13px;
+  background: #f4f6fa;
+  color: var(--bfa-navy);
+  width: 28px;
+}
+
+.tdGoals {
+  text-align: center;
+  font-family: var(--font-mono), "JetBrains Mono", monospace;
+  font-weight: 600;
+}
+
+.starterName {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ─── Subs band ────────────────────────────────────────── */
+.subsBand {
+  background: var(--bfa-navy-dark);
+  color: white;
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.subsBand::before,
+.subsBand::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ─── Coach footer ─────────────────────────────────────── */
+.coach {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.coachCell {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 0 4px 0;
+  border-bottom: 1.5px solid var(--rule);
+}
+
+.coachLbl {
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bfa-navy);
+}
+
+.coachVal {
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  flex: 1;
+}
+
+/* ─── Page footer ──────────────────────────────────────── */
+.pageFooter {
+  margin-top: auto;
+  padding-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 20px;
+}
+
+.submission {
+  font-size: 8.5px;
+  color: #666;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+
+.submissionRef {
+  font-family: var(--font-mono), "JetBrains Mono", monospace;
+  letter-spacing: 0;
+  color: #888;
+  margin-top: 4px;
+  display: block;
+  text-transform: none;
+}
+
+.ksMark {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.ksMarkLabel {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.ksLogo {
+  display: block;
+  height: 56px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* ─── Print ────────────────────────────────────────────── */
+@page {
+  size: A4 portrait;
+  margin: 10mm 10mm 8mm 10mm;
+}
+
+@media print {
+  :global([data-app-chrome="true"]) {
+    display: none !important;
+  }
+
+  :global(main) {
+    padding: 0 !important;
+  }
+
+  :global(.print-controls) {
+    display: none !important;
+  }
+
+  :global(html),
+  :global(body) {
+    background: white !important;
+  }
+
+  .sheet {
+    margin: 0;
+    box-shadow: none;
+    padding: 0;
+    width: auto;
+    min-height: auto;
+  }
+
+  .playersTable,
+  .meta,
+  .coach {
+    break-inside: avoid;
+  }
+}
