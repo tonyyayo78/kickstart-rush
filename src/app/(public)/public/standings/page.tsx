@@ -28,6 +28,7 @@ type UpcomingFixture = {
   away_team_name: string;
   home_is_kickstart: boolean;
   away_is_kickstart: boolean;
+  competition_code: string;
 };
 
 type LastResult = {
@@ -81,6 +82,14 @@ function squadLabel(teamName: string): string {
   return teamName.replace(/^Kickstart\s*/i, "");
 }
 
+function compLabel(code: string): string {
+  const newFmt = code.match(/^BFA-2026-U(\d+)(?:-([A-Z]))?$/i);
+  if (newFmt) return newFmt[2] ? `U${newFmt[1]}-${newFmt[2]}` : `U${newFmt[1]}`;
+  const oldFmt = code.match(/^BFA-U(\d+)-\d+-Z([A-Z])$/i);
+  if (oldFmt) return `U${oldFmt[1]} Z${oldFmt[2]}`;
+  return code;
+}
+
 export default async function PublicStandingsPage() {
   const supabase = await createAnonPublicClient();
 
@@ -90,7 +99,7 @@ export default async function PublicStandingsPage() {
       supabase
         .from("public_fixtures")
         .select(
-          "kickoff_at, venue, home_team_name, away_team_name, home_is_kickstart, away_is_kickstart",
+          "kickoff_at, venue, home_team_name, away_team_name, home_is_kickstart, away_is_kickstart, competition_code",
         )
         .eq("status", "scheduled")
         .gte("kickoff_at", new Date().toISOString())
@@ -150,60 +159,53 @@ export default async function PublicStandingsPage() {
       <div className="-mx-6 -mt-6 mb-8 bg-[#00267F] px-6 py-6 text-white md:py-8">
         <div className="mx-auto max-w-4xl">
           <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
-            BFA U15 Qualifiers 2026
+            BFA National Youth Tournament 2026
           </h1>
           <p className="mt-3 text-[#B8C5E8]">
-            Live standings for Kickstart Elite and Kickstart Premier in the{" "}
+            Live standings for all Kickstart squads across the{" "}
             <span className="text-[#FFC726] font-bold">National Youth Tournament</span>.
           </p>
         </div>
       </div>
 
       {/* Last match strip */}
-      {orderedKickstartTeams.length > 0 && (
+      {lastResultByTeam.size > 0 && (
         <section className="mb-10">
           <h2 className="text-xl font-black uppercase tracking-tight">
             Last Match
           </h2>
           <div className="mt-2 mb-4 h-1 w-12 bg-[#FFC726]" />
           <div className="flex flex-col gap-2">
-            {orderedKickstartTeams.map((teamName) => {
-              const result = lastResultByTeam.get(teamName) ?? null;
-              const label = squadLabel(teamName);
+            {orderedKickstartTeams
+              .filter((teamName) => lastResultByTeam.has(teamName))
+              .map((teamName) => {
+                const result = lastResultByTeam.get(teamName)!;
+                const label = squadLabel(teamName);
 
-              return (
-                <Link
-                  key={teamName}
-                  href="/public/results"
-                  className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 transition-colors hover:border-[#00267F]"
-                >
-                  <span className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-zinc-500">
-                    {label}
-                  </span>
-
-                  {result ? (
-                    <>
-                      <span className="flex-1 text-sm">
-                        <span className="font-black tabular-nums">
-                          {result.kickstart_score}–{result.opponent_score}
-                        </span>
-                        <span className="ml-2 text-zinc-600">
-                          {result.opponent_name}
-                        </span>
-                      </span>
-                      <FormPills form={[result.outcome]} />
-                      <span className="shrink-0 text-xs text-zinc-400">
-                        {formatShortDate(result.kickoff_at)}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="flex-1 text-sm italic text-zinc-400">
-                      No matches played yet
+                return (
+                  <Link
+                    key={teamName}
+                    href="/public/results"
+                    className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 transition-colors hover:border-[#00267F]"
+                  >
+                    <span className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-zinc-500">
+                      {label}
                     </span>
-                  )}
-                </Link>
-              );
-            })}
+                    <span className="flex-1 text-sm">
+                      <span className="font-black tabular-nums">
+                        {result.kickstart_score}–{result.opponent_score}
+                      </span>
+                      <span className="ml-2 text-zinc-600">
+                        {result.opponent_name}
+                      </span>
+                    </span>
+                    <FormPills form={[result.outcome]} />
+                    <span className="shrink-0 text-xs text-zinc-400">
+                      {formatShortDate(result.kickoff_at)}
+                    </span>
+                  </Link>
+                );
+              })}
           </div>
         </section>
       )}
@@ -238,11 +240,12 @@ export default async function PublicStandingsPage() {
                         <span className={f.away_is_kickstart ? "font-bold text-[#00267F]" : "font-medium"}>
                           {f.away_team_name}
                         </span>
-                        {f.venue && (
-                          <span className="mt-0.5 block text-xs text-zinc-400">
-                            {f.venue}
+                        <span className="mt-0.5 flex items-center gap-2 text-xs text-zinc-400">
+                          <span className="font-semibold text-zinc-500">
+                            {compLabel(f.competition_code)}
                           </span>
-                        )}
+                          {f.venue && <span>· {f.venue}</span>}
+                        </span>
                       </div>
                     </li>
                   ))}
