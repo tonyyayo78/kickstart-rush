@@ -58,7 +58,7 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-screen">
-      <header className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-5 md:px-6 md:py-6">
+      <header data-app-chrome="true" className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-5 md:px-6 md:py-6">
         <div className="flex items-center gap-6">
           <a href="/dashboard" className="hover:opacity-75 transition-opacity shrink-0">
             <Logo className="h-10 md:h-12" priority />
