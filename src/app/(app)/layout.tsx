@@ -16,6 +16,23 @@ export default async function AppLayout({
 
   if (!user) redirect("/sign-in");
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("email, display_name, is_approver, must_change_password, status, removed_at")
+    .eq("id", user.id)
+    .single();
+
+  // Defence-in-depth: lock out non-active or removed users even if their
+  // Supabase session is still valid. Current data model only ever sets
+  // status='active' on profile insert, but this check defends against
+  // future drift and addresses audit finding 2026-05-15 #2.
+  if (!profile || profile.status !== "active" || profile.removed_at !== null) {
+    await supabase.auth.signOut();
+    redirect("/sign-in");
+  }
+
+  if (profile.must_change_password) redirect("/auth/set-password");
+
   // Best-effort heartbeat — throttled to one write per 60s per user
   try {
     // eslint-disable-next-line react-hooks/purity
@@ -29,14 +46,6 @@ export default async function AppLayout({
   } catch {
     // swallow — heartbeat failure never blocks a page render
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("email, display_name, is_approver, must_change_password")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.must_change_password) redirect("/auth/set-password");
 
   const { count: squadCount } = await supabase
     .from("profile_teams")

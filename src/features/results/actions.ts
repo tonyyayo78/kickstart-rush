@@ -25,8 +25,7 @@ const resultSchema = z.object({
   matchNotes: z.string().max(5000).optional(),
   scorers: z.array(goalSchema),
   cards: z.array(cardSchema).default([]),
-  homeTeamId: z.string().uuid(),
-  awayTeamId: z.string().uuid(),
+  // homeTeamId / awayTeamId removed — looked up server-side from the fixture.
 });
 
 export type ResultActionState = { error: string } | null;
@@ -45,8 +44,22 @@ export async function createResult(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  const { fixtureId, homeScore, awayScore, matchNotes, scorers, cards, homeTeamId, awayTeamId } =
-    parsed.data;
+  const { fixtureId, homeScore, awayScore, matchNotes, scorers, cards } = parsed.data;
+
+  // Look up the trusted team IDs from the fixture itself. Never trust
+  // client-supplied team IDs for the scorer-count invariant.
+  const { data: fixture, error: fixtureError } = await supabase
+    .from("fixtures")
+    .select("home_team_id, away_team_id")
+    .eq("id", fixtureId)
+    .single();
+
+  if (fixtureError || !fixture) {
+    return { error: "Fixture not found." };
+  }
+
+  const homeTeamId = fixture.home_team_id;
+  const awayTeamId = fixture.away_team_id;
 
   const homeScorers = scorers.filter((s) => s.competitionTeamId === homeTeamId).length;
   const awayScorers = scorers.filter((s) => s.competitionTeamId === awayTeamId).length;
@@ -136,8 +149,22 @@ export async function updateResult(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  const { homeScore, awayScore, matchNotes, scorers, cards, homeTeamId, awayTeamId } =
-    parsed.data;
+  const { homeScore, awayScore, matchNotes, scorers, cards } = parsed.data;
+
+  // Look up the trusted team IDs from the fixture itself. Never trust
+  // client-supplied team IDs for the scorer-count invariant.
+  const { data: fixture, error: fixtureError } = await supabase
+    .from("fixtures")
+    .select("home_team_id, away_team_id")
+    .eq("id", fixtureId)
+    .single();
+
+  if (fixtureError || !fixture) {
+    return { error: "Fixture not found." };
+  }
+
+  const homeTeamId = fixture.home_team_id;
+  const awayTeamId = fixture.away_team_id;
 
   const homeScorers = scorers.filter((s) => s.competitionTeamId === homeTeamId).length;
   const awayScorers = scorers.filter((s) => s.competitionTeamId === awayTeamId).length;
