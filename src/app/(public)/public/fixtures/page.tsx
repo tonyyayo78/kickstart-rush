@@ -1,4 +1,5 @@
 import { createAnonPublicClient } from "@/lib/supabase/anon-public";
+import RealtimePublicRefresh from "@/features/public-realtime/RealtimePublicRefresh";
 
 const BARBADOS_TZ = "America/Barbados";
 
@@ -61,6 +62,7 @@ export default async function PublicFixturesPage() {
 
   return (
     <div>
+      <RealtimePublicRefresh />
       <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
         Fixtures
       </h1>
