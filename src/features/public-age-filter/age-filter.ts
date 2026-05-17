@@ -84,3 +84,38 @@ export function matchesAgeFilter(competitionCode: string | null | undefined, fil
   if (filter === "all") return true;
   return ageGroupFromCompetitionCode(competitionCode) === filter;
 }
+
+/**
+ * Comparator for sorting competition codes by:
+ *  1. Age group ascending: U9 → U11 → U13 → U15 → U17
+ *  2. Zone alphabetical: League A → League B (no-zone variants last)
+ *
+ * Examples (sorted ascending):
+ *   BFA-2026-U9-A, BFA-2026-U9-B, BFA-2026-U11-A, BFA-2026-U11-B,
+ *   BFA-2026-U13-A, BFA-2026-U13-B, BFA-U15-2026-ZA, BFA-U15-2026-ZB,
+ *   BFA-2026-U17
+ *
+ * Codes that don't match either expected format sort to the end alphabetically.
+ */
+export function compareCompetitionCode(a: string, b: string): number {
+  const ageOrder: Record<string, number> = { U9: 1, U11: 2, U13: 3, U15: 4, U17: 5 };
+
+  const parse = (code: string): { ageRank: number; zone: string } => {
+    const m1 = code.match(/^BFA-2026-U(\d+)(?:-([A-Z]))?$/i);
+    if (m1) {
+      return { ageRank: ageOrder[`U${m1[1]}`] ?? 99, zone: (m1[2] ?? "").toUpperCase() };
+    }
+    const m2 = code.match(/^BFA-U(\d+)-\d+-Z([A-Z])$/i);
+    if (m2) {
+      return { ageRank: ageOrder[`U${m2[1]}`] ?? 99, zone: m2[2].toUpperCase() };
+    }
+    return { ageRank: 99, zone: "ZZZ" };
+  };
+
+  const A = parse(a);
+  const B = parse(b);
+  if (A.ageRank !== B.ageRank) return A.ageRank - B.ageRank;
+  if (A.zone === "" && B.zone !== "") return 1;
+  if (A.zone !== "" && B.zone === "") return -1;
+  return A.zone.localeCompare(B.zone);
+}

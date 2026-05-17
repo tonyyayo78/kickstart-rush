@@ -6,6 +6,7 @@ import {
   parseAgeParam,
   competitionCodePatternsFor,
   competitionLabel,
+  compareCompetitionCode,
 } from "@/features/public-age-filter/age-filter";
 
 const BARBADOS_TZ = "America/Barbados";
@@ -126,7 +127,7 @@ export default async function PublicFixturesPage({
             <h2 className="mb-3 border-b border-zinc-200 pb-2 text-xl font-black uppercase tracking-tight text-black">
               {formatDateHeader(dayFixtures[0].kickoff_at)}
             </h2>
-            {[...compGroups.entries()].map(([code, cg]) => (
+            {[...compGroups.entries()].sort(([codeA], [codeB]) => compareCompetitionCode(codeA, codeB)).map(([code, cg]) => (
               <div key={code} className="mb-4">
                 <p className="mb-2 text-xs font-semibold tracking-tight text-zinc-600">
                   {competitionLabel(code)}

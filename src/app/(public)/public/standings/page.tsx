@@ -10,6 +10,7 @@ import {
   competitionCodePatternsFor,
   ageGroupFromCompetitionCode,
   competitionLabel,
+  compareCompetitionCode,
 } from "@/features/public-age-filter/age-filter";
 
 const BARBADOS_TZ = "America/Barbados";
@@ -163,14 +164,9 @@ export default async function PublicStandingsPage({
 
   // Last Match: filter to the active age group using competition_code carried
   // directly by each view row — no Map lookup needed.
-  const AGE_ORDER: Record<string, number> = { U9: 1, U11: 2, U13: 3, U15: 4, U17: 5 };
   const sortedLastResults = [...(lastResultsRaw ?? [])]
     .filter((r) => matchesAgeFilter(r.competition_code, filter))
-    .sort((a, b) => {
-      const ageA = ageGroupFromCompetitionCode(a.competition_code);
-      const ageB = ageGroupFromCompetitionCode(b.competition_code);
-      return (AGE_ORDER[ageA ?? ""] ?? 99) - (AGE_ORDER[ageB ?? ""] ?? 99);
-    });
+    .sort((a, b) => compareCompetitionCode(a.competition_code, b.competition_code));
 
   const heroTitle =
     filter === "all"
@@ -300,7 +296,7 @@ export default async function PublicStandingsPage({
         <p className="text-sm text-zinc-500">Standings not yet available.</p>
       )}
 
-      {[...competitions.values()].map((comp) => (
+      {[...competitions.entries()].sort(([codeA], [codeB]) => compareCompetitionCode(codeA, codeB)).map(([, comp]) => (
         <section key={comp.name} className="mb-10">
           <h2 className="mb-3 text-base font-bold uppercase tracking-wide text-zinc-700">
             {comp.name}
