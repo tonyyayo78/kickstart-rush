@@ -25,13 +25,7 @@ To verify the Supabase connection is working, visit:
 http://localhost:3000/api/health
 ```
 
-Expected response (before schema migrations are applied):
-
-```json
-{ "ok": true, "supabase": "reachable", "note": "expected: schema not deployed" }
-```
-
-After applying migrations (`supabase db push`), the response will be:
+Expected response:
 
 ```json
 { "ok": true, "supabase": "reachable", "schema": "deployed" }
@@ -39,15 +33,17 @@ After applying migrations (`supabase db push`), the response will be:
 
 ## Authentication
 
-Only one email address can sign in: the value of `OWNER_ALLOWED_EMAIL` in your environment (`.env.local` locally, Vercel env vars in production). The Supabase project is configured to `alythcott@gmail.com`.
+Sign-in uses Supabase Auth magic links. Two paths exist:
 
-To change the allowed email:
-1. Update `OWNER_ALLOWED_EMAIL` in `.env.local` (local) and in Vercel (preview + production).
-2. Run `UPDATE public.app_config SET value = 'new@email.com' WHERE key = 'owner_email';` in the Supabase SQL Editor.
+1. **Owner (bootstrap).** The first owner account is seeded with `is_approver = true` and full squad access via migration. They sign in by entering their email at `/sign-in` and clicking the one-time link they receive.
 
-The sign-in flow uses Supabase Auth magic links. When you enter your email and click "Send magic link", a one-time link is emailed to you. Clicking it exchanges the code for a session and redirects to `/dashboard`. Sessions expire after 30 days of inactivity.
+2. **Invited users.** An approver (initially the owner) invites a user from `/admin/users` and selects their role and squad access. The invitee receives a Supabase invite email containing a magic link. Clicking it creates their session; their profile is provisioned by the approver's invite action with the granted role, status, and squads.
 
-Any email that is not allow-listed is silently rejected — the sign-in page always shows the same generic message regardless of whether the email matches, to avoid leaking allow-list status.
+Approvers can suspend, reactivate, remove, restore, and purge accounts from the same admin screen. Suspended or removed users with valid Supabase sessions are signed out and redirected to `/sign-in` on every authenticated page load — defence-in-depth alongside Supabase Auth bans. The check is enforced both in `src/app/(app)/layout.tsx` and in `src/lib/auth/require-approver.ts` (closing audit findings from 2026-05-15).
+
+Sessions expire after 30 days of inactivity.
+
+> **Note.** The `OWNER_ALLOWED_EMAIL` env var is still validated at startup but is currently inert — the `handle_new_user` trigger that consumed it was dropped in migration `20260514115715`. Cleanup of the unused var is queued as a low-priority task.
 
 ## Documentation
 
