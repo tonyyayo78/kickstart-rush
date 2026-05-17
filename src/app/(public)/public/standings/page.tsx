@@ -167,18 +167,21 @@ export default async function PublicStandingsPage({
     if (row.is_kickstart) kickstartTeamCompCode.set(row.team_name, row.competition_code);
   }
 
-  // Last Match shows the most recent result PER Kickstart squad across all
-  // age groups — intentionally NOT filtered by the active age filter. Coaches
-  // and parents want a single glance at "how every squad did most recently"
-  // regardless of which age group they navigated to.
+  // Last Match shows the most recent result for each Kickstart squad in the
+  // selected age group. Blank when no results have been recorded for that group yet.
   const AGE_ORDER: Record<string, number> = { U9: 1, U11: 2, U13: 3, U15: 4, U17: 5 };
-  const sortedLastResults = [...(lastResultsRaw ?? [])].sort((a, b) => {
-    const codeA = kickstartTeamCompCode.get(a.kickstart_team_name) ?? "";
-    const codeB = kickstartTeamCompCode.get(b.kickstart_team_name) ?? "";
-    const ageA = ageGroupFromCompetitionCode(codeA);
-    const ageB = ageGroupFromCompetitionCode(codeB);
-    return (AGE_ORDER[ageA ?? ""] ?? 99) - (AGE_ORDER[ageB ?? ""] ?? 99);
-  });
+  const sortedLastResults = [...(lastResultsRaw ?? [])]
+    .filter((r) => {
+      const code = kickstartTeamCompCode.get(r.kickstart_team_name) ?? "";
+      return matchesAgeFilter(code, filter);
+    })
+    .sort((a, b) => {
+      const codeA = kickstartTeamCompCode.get(a.kickstart_team_name) ?? "";
+      const codeB = kickstartTeamCompCode.get(b.kickstart_team_name) ?? "";
+      const ageA = ageGroupFromCompetitionCode(codeA);
+      const ageB = ageGroupFromCompetitionCode(codeB);
+      return (AGE_ORDER[ageA ?? ""] ?? 99) - (AGE_ORDER[ageB ?? ""] ?? 99);
+    });
 
   const heroTitle =
     filter === "all"
@@ -210,7 +213,7 @@ export default async function PublicStandingsPage({
         <AgeFilterPills />
       </Suspense>
 
-      {/* Last match strip — all Kickstart squads with results, regardless of age filter */}
+      {/* Last match strip — filtered to the selected age group */}
       {sortedLastResults.length > 0 && (
         <section className="mb-10">
           <h2 className="text-xl font-black uppercase tracking-tight">
