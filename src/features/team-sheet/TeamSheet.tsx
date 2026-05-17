@@ -21,7 +21,6 @@ const mono = JetBrains_Mono({
 
 const DATE_FMT = new Intl.DateTimeFormat("en-BB", {
   timeZone: "America/Barbados",
-  weekday: "short",
   year: "numeric",
   month: "short",
   day: "numeric",
