@@ -1,5 +1,11 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { createServerClient } from "@/lib/supabase/server";
+import AgeFilterPills from "@/features/public-age-filter/AgeFilterPills";
+import {
+  parseAgeParam,
+  matchesAgeFilter,
+} from "@/features/public-age-filter/age-filter";
 
 const BARBADOS_TZ = "America/Barbados";
 
@@ -40,23 +46,32 @@ type FixtureRow = {
   venue: string | null;
   status: string;
   match_state: string | null;
+  competition: { code: string };
   home_team: Team;
   away_team: Team;
   results: ResultScore[] | null;
   lineups: { id: string }[] | null;
 };
 
-export default async function FixturesPage() {
+export default async function FixturesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ age?: string }>;
+}) {
+  const { age } = await searchParams;
+  const filter = parseAgeParam(age);
+
   const supabase = await createServerClient();
 
   const { data: fixturesRaw } = await supabase
     .from("fixtures")
     .select(
-      "id, kickoff_at, venue, status, match_state, home_team:home_team_id(team_name, is_kickstart), away_team:away_team_id(team_name, is_kickstart), results!fixture_id(home_score, away_score), lineups!fixture_id(id)",
+      "id, kickoff_at, venue, status, match_state, competition:competition_id(code), home_team:home_team_id(team_name, is_kickstart), away_team:away_team_id(team_name, is_kickstart), results!fixture_id(home_score, away_score), lineups!fixture_id(id)",
     )
     .order("kickoff_at", { ascending: true });
 
-  const fixtures = (fixturesRaw ?? []) as unknown as FixtureRow[];
+  const fixtures = ((fixturesRaw ?? []) as unknown as FixtureRow[])
+    .filter((f) => matchesAgeFilter(f.competition.code, filter));
 
   const groups = new Map<string, FixtureRow[]>();
   for (const f of fixtures) {
@@ -70,7 +85,11 @@ export default async function FixturesPage() {
       <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
         Fixtures
       </h1>
-      <div className="mt-2 mb-6 h-1 w-16 bg-[#FFC726]" />
+      <div className="mt-2 mb-4 h-1 w-16 bg-[#FFC726]" />
+
+      <Suspense>
+        <AgeFilterPills />
+      </Suspense>
 
       {groups.size === 0 && (
         <p className="text-sm text-zinc-500">No fixtures yet.</p>
