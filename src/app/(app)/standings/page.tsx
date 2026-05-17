@@ -1,4 +1,11 @@
+import { Suspense } from "react";
 import { createServerClient } from "@/lib/supabase/server";
+import AgeFilterPills from "@/features/public-age-filter/AgeFilterPills";
+import {
+  parseAgeParam,
+  matchesAgeFilter,
+  compareCompetitionCode,
+} from "@/features/public-age-filter/age-filter";
 
 type StandingRow = {
   competition_code: string;
@@ -15,7 +22,14 @@ type StandingRow = {
   points: number;
 };
 
-export default async function StandingsPage() {
+export default async function StandingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ age?: string }>;
+}) {
+  const { age } = await searchParams;
+  const filter = parseAgeParam(age);
+
   const supabase = await createServerClient();
   const { data: rows } = await supabase
     .from("public_standings")
@@ -23,7 +37,7 @@ export default async function StandingsPage() {
     .returns<StandingRow[]>();
 
   const competitions = new Map<string, { name: string; rows: StandingRow[] }>();
-  for (const row of rows ?? []) {
+  for (const row of (rows ?? []).filter((r) => matchesAgeFilter(r.competition_code, filter))) {
     if (!competitions.has(row.competition_code)) {
       competitions.set(row.competition_code, {
         name: row.competition_name,
@@ -33,18 +47,26 @@ export default async function StandingsPage() {
     competitions.get(row.competition_code)!.rows.push(row);
   }
 
+  const orderedCompetitions = [...competitions.entries()].sort(([codeA], [codeB]) =>
+    compareCompetitionCode(codeA, codeB)
+  );
+
   return (
     <div className="max-w-2xl">
       <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
         Standings
       </h1>
-      <div className="mt-2 mb-6 h-1 w-16 bg-[#FFC726]" />
+      <div className="mt-2 mb-4 h-1 w-16 bg-[#FFC726]" />
+
+      <Suspense>
+        <AgeFilterPills />
+      </Suspense>
 
       {competitions.size === 0 && (
         <p className="text-sm text-zinc-500">Standings not yet available.</p>
       )}
 
-      {[...competitions.values()].map((comp) => (
+      {orderedCompetitions.map(([, comp]) => (
         <section key={comp.name} className="mb-10">
           <h2 className="mb-3 text-base font-bold uppercase tracking-wide text-zinc-700">
             {comp.name}
