@@ -16,10 +16,8 @@ export default function AgeFilterPills() {
     router.replace(`${pathname}?${params.toString()}`);
   }
 
-  const options: { value: AgeFilter; label: string }[] = [
-    { value: "all", label: "All" },
-    ...AGE_GROUPS.map((g) => ({ value: g as AgeFilter, label: g })),
-  ];
+  const options: { value: AgeFilter; label: string }[] =
+    AGE_GROUPS.map((g) => ({ value: g, label: g }));
 
   return (
     <nav
