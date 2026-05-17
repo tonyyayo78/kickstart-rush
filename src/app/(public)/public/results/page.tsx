@@ -1,6 +1,12 @@
+import { Suspense } from "react";
 import { createAnonPublicClient } from "@/lib/supabase/anon-public";
 import CardPill from "@/components/CardPill";
 import RealtimePublicRefresh from "@/features/public-realtime/RealtimePublicRefresh";
+import AgeFilterPills from "@/features/public-age-filter/AgeFilterPills";
+import {
+  parseAgeParam,
+  competitionCodePatternsFor,
+} from "@/features/public-age-filter/age-filter";
 
 type Scorer = {
   team_name: string;
@@ -26,23 +32,52 @@ type Result = {
   cards: Card[];
 };
 
-export default async function PublicResultsPage() {
+export default async function PublicResultsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ age?: string }>;
+}) {
+  const { age } = await searchParams;
+  const filter = parseAgeParam(age);
+
   const supabase = await createAnonPublicClient();
-  const { data: results } = await supabase
+
+  const baseQuery = supabase
     .from("public_results_with_scorers")
     .select("*")
-    .returns<Result[]>();
+    .order("kickoff_at", { ascending: false });
+
+  const { data: results } = await (
+    filter !== "all"
+      ? baseQuery.or(
+          competitionCodePatternsFor(filter)
+            .map((p) => `competition_code.ilike.${p}`)
+            .join(",")
+        )
+      : baseQuery
+  ).returns<Result[]>();
+
+  const header = (
+    <>
+      <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
+        Results
+      </h1>
+      <div className="mt-2 mb-4 h-1 w-16 bg-[#FFC726]" />
+      <Suspense>
+        <AgeFilterPills />
+      </Suspense>
+    </>
+  );
 
   if (!results?.length) {
     return (
       <div>
         <RealtimePublicRefresh />
-        <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
-          Results
-        </h1>
-        <div className="mt-2 mb-6 h-1 w-16 bg-[#FFC726]" />
+        {header}
         <p className="text-sm text-zinc-500">
-          Results will appear here as matches are played.
+          {filter !== "all"
+            ? `No ${filter} matches played yet.`
+            : "Results will appear here as matches are played."}
         </p>
       </div>
     );
@@ -51,10 +86,7 @@ export default async function PublicResultsPage() {
   return (
     <div>
       <RealtimePublicRefresh />
-      <h1 className="text-3xl font-black uppercase tracking-tight md:text-4xl">
-        Results
-      </h1>
-      <div className="mt-2 mb-6 h-1 w-16 bg-[#FFC726]" />
+      {header}
       <ul className="flex flex-col gap-3">
         {results.map((r, i) => {
           const isKickstart =
