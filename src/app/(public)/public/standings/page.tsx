@@ -8,6 +8,8 @@ import {
   parseAgeParam,
   matchesAgeFilter,
   competitionCodePatternsFor,
+  ageGroupFromCompetitionCode,
+  competitionLabel,
 } from "@/features/public-age-filter/age-filter";
 
 const BARBADOS_TZ = "America/Barbados";
@@ -85,16 +87,15 @@ function localDateKey(iso: string): string {
   }).format(new Date(iso));
 }
 
-function squadLabel(teamName: string): string {
-  return teamName.replace(/^Kickstart\s*/i, "");
-}
-
-function compLabel(code: string): string {
-  const newFmt = code.match(/^BFA-2026-U(\d+)(?:-([A-Z]))?$/i);
-  if (newFmt) return newFmt[2] ? `U${newFmt[1]}-${newFmt[2]}` : `U${newFmt[1]}`;
-  const oldFmt = code.match(/^BFA-U(\d+)-\d+-Z([A-Z])$/i);
-  if (oldFmt) return `U${oldFmt[1]} Z${oldFmt[2]}`;
-  return code;
+// Compact label for Last Match rows: "Elite U13", "Premier U9", "U17", etc.
+function squadShortLabel(teamName: string, competitionCode: string): string {
+  const suffix = teamName
+    .replace(/^Kickstart\s*/i, "")
+    .replace(/\s*\(\w+\)$/, "")
+    .trim();
+  const age = ageGroupFromCompetitionCode(competitionCode);
+  if (!suffix) return age ?? teamName;
+  return age ? `${suffix} ${age}` : suffix;
 }
 
 export default async function PublicStandingsPage({
@@ -159,22 +160,28 @@ export default async function PublicStandingsPage({
     upcomingGroups.get(key)!.push(f);
   }
 
-  // Derive Kickstart teams from filtered standings (respects age filter)
-  const kickstartTeams = [...competitions.values()]
-    .flatMap((comp) => comp.rows.filter((r) => r.is_kickstart))
-    .map((r) => r.team_name);
-  const seenTeams = new Set<string>();
-  const orderedKickstartTeams = kickstartTeams.filter((name) => {
-    if (seenTeams.has(name)) return false;
-    seenTeams.add(name);
-    return true;
-  });
-
-  // Index last results by team name
-  const lastResultByTeam = new Map<string, LastResult>();
-  for (const r of lastResultsRaw ?? []) {
-    lastResultByTeam.set(r.kickstart_team_name, r);
+  // Build a competition-code lookup for ALL Kickstart teams (unfiltered) so
+  // Last Match can label and sort rows by age group regardless of the active filter.
+  const kickstartTeamCompCode = new Map<string, string>();
+  for (const row of rows ?? []) {
+    if (row.is_kickstart) kickstartTeamCompCode.set(row.team_name, row.competition_code);
   }
+
+  // Last Match shows the most recent result for each Kickstart squad in the
+  // selected age group. Blank when no results have been recorded for that group yet.
+  const AGE_ORDER: Record<string, number> = { U9: 1, U11: 2, U13: 3, U15: 4, U17: 5 };
+  const sortedLastResults = [...(lastResultsRaw ?? [])]
+    .filter((r) => {
+      const code = kickstartTeamCompCode.get(r.kickstart_team_name) ?? "";
+      return matchesAgeFilter(code, filter);
+    })
+    .sort((a, b) => {
+      const codeA = kickstartTeamCompCode.get(a.kickstart_team_name) ?? "";
+      const codeB = kickstartTeamCompCode.get(b.kickstart_team_name) ?? "";
+      const ageA = ageGroupFromCompetitionCode(codeA);
+      const ageB = ageGroupFromCompetitionCode(codeB);
+      return (AGE_ORDER[ageA ?? ""] ?? 99) - (AGE_ORDER[ageB ?? ""] ?? 99);
+    });
 
   const heroTitle =
     filter === "all"
@@ -206,44 +213,45 @@ export default async function PublicStandingsPage({
         <AgeFilterPills />
       </Suspense>
 
-      {/* Last match strip — only teams with a result */}
-      {lastResultByTeam.size > 0 && orderedKickstartTeams.some((t) => lastResultByTeam.has(t)) && (
+      {/* Last match strip — filtered to the selected age group */}
+      {sortedLastResults.length > 0 && (
         <section className="mb-10">
           <h2 className="text-xl font-black uppercase tracking-tight">
             Last Match
           </h2>
-          <div className="mt-2 mb-4 h-1 w-12 bg-[#FFC726]" />
+          <p className="mt-1 text-sm text-zinc-500">
+            Most recent result for each Kickstart squad
+          </p>
+          <div className="mt-3 mb-4 h-1 w-12 bg-[#FFC726]" />
           <div className="flex flex-col gap-2">
-            {orderedKickstartTeams
-              .filter((teamName) => lastResultByTeam.has(teamName))
-              .map((teamName) => {
-                const result = lastResultByTeam.get(teamName)!;
-                const label = squadLabel(teamName);
+            {sortedLastResults.map((result) => {
+              const compCode = kickstartTeamCompCode.get(result.kickstart_team_name) ?? "";
+              const label = squadShortLabel(result.kickstart_team_name, compCode);
 
-                return (
-                  <Link
-                    key={teamName}
-                    href="/public/results"
-                    className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 transition-colors hover:border-[#00267F]"
-                  >
-                    <span className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-zinc-500">
-                      {label}
+              return (
+                <Link
+                  key={result.kickstart_team_id}
+                  href="/public/results"
+                  className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 transition-colors hover:border-[#00267F]"
+                >
+                  <span className="w-20 shrink-0 text-xs font-bold uppercase tracking-wide text-zinc-500">
+                    {label}
+                  </span>
+                  <span className="flex-1 text-sm">
+                    <span className="font-black tabular-nums">
+                      {result.kickstart_score}–{result.opponent_score}
                     </span>
-                    <span className="flex-1 text-sm">
-                      <span className="font-black tabular-nums">
-                        {result.kickstart_score}–{result.opponent_score}
-                      </span>
-                      <span className="ml-2 text-zinc-600">
-                        {result.opponent_name}
-                      </span>
+                    <span className="ml-2 text-zinc-600">
+                      {result.opponent_name}
                     </span>
-                    <FormPills form={[result.outcome]} />
-                    <span className="shrink-0 text-xs text-zinc-400">
-                      {formatShortDate(result.kickoff_at)}
-                    </span>
-                  </Link>
-                );
-              })}
+                  </span>
+                  <FormPills form={[result.outcome]} />
+                  <span className="shrink-0 text-xs text-zinc-400">
+                    {formatShortDate(result.kickoff_at)}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}
@@ -279,8 +287,8 @@ export default async function PublicStandingsPage({
                           {f.away_team_name}
                         </span>
                         <span className="mt-0.5 flex items-center gap-2 text-xs text-zinc-400">
-                          <span className="font-semibold text-zinc-500">
-                            {compLabel(f.competition_code)}
+                          <span className="font-semibold tracking-tight text-zinc-500">
+                            {competitionLabel(f.competition_code)}
                           </span>
                           {f.venue && <span>· {f.venue}</span>}
                         </span>

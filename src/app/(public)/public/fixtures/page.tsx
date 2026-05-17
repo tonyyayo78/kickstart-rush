@@ -5,6 +5,7 @@ import AgeFilterPills from "@/features/public-age-filter/AgeFilterPills";
 import {
   parseAgeParam,
   competitionCodePatternsFor,
+  competitionLabel,
 } from "@/features/public-age-filter/age-filter";
 
 const BARBADOS_TZ = "America/Barbados";
@@ -38,15 +39,6 @@ function localDateKey(iso: string): string {
   }).format(new Date(iso));
 }
 
-function compLabel(code: string): string {
-  // BFA-2026-U11-A → U11-A, BFA-2026-U17 → U17
-  const newFmt = code.match(/^BFA-2026-U(\d+)(?:-([A-Z]))?$/i);
-  if (newFmt) return newFmt[2] ? `U${newFmt[1]}-${newFmt[2]}` : `U${newFmt[1]}`;
-  // BFA-U15-2026-ZA → U15 ZA
-  const oldFmt = code.match(/^BFA-U(\d+)-\d+-Z([A-Z])$/i);
-  if (oldFmt) return `U${oldFmt[1]} Z${oldFmt[2]}`;
-  return code;
-}
 
 type Fixture = {
   competition_code: string;
@@ -136,8 +128,8 @@ export default async function PublicFixturesPage({
             </h2>
             {[...compGroups.entries()].map(([code, cg]) => (
               <div key={code} className="mb-4">
-                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-zinc-500">
-                  {compLabel(code)}
+                <p className="mb-2 text-xs font-semibold tracking-tight text-zinc-600">
+                  {competitionLabel(code)}
                 </p>
                 <ul className="flex flex-col gap-2">
                   {cg.fixtures.map((f, i) => {
