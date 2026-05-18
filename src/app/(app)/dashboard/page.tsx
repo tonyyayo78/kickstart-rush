@@ -9,10 +9,10 @@ const LINKS = [
   {
     href: "/standings",
     title: "View standings",
-    description: "Check the table for Elite and Premier",
+    description: "Check the league tables",
   },
   {
-    href: "/squads/KE2026/players",
+    href: "/teams",
     title: "Manage squads",
     description: "View and edit player rosters",
   },
