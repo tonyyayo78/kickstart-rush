@@ -1,5 +1,11 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { createServerClient } from "@/lib/supabase/server";
+import AgeFilterPills from "@/features/public-age-filter/AgeFilterPills";
+import {
+  parseAgeParam,
+  matchesAgeFilter,
+} from "@/features/public-age-filter/age-filter";
 
 const BARBADOS_TZ = "America/Barbados";
 
@@ -34,6 +40,7 @@ type FixtureRow = {
   id: string;
   kickoff_at: string;
   venue: string | null;
+  competition: { code: string };
   home_team: TeamInfo;
   away_team: TeamInfo;
 };
@@ -50,14 +57,21 @@ type FixtureFees = {
   cashCents: number;
 };
 
-export default async function FeesPage() {
+export default async function FeesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ age?: string }>;
+}) {
+  const { age } = await searchParams;
+  const filter = parseAgeParam(age);
+
   const supabase = await createServerClient();
 
   const [{ data: fixturesRaw }, { data: feesRaw }] = await Promise.all([
     supabase
       .from("fixtures")
       .select(
-        "id, kickoff_at, venue, home_team:home_team_id(team_name, is_kickstart), away_team:away_team_id(team_name, is_kickstart)",
+        "id, kickoff_at, venue, competition:competition_id(code), home_team:home_team_id(team_name, is_kickstart), away_team:away_team_id(team_name, is_kickstart)",
       )
       .order("kickoff_at", { ascending: true }),
     supabase
@@ -68,9 +82,11 @@ export default async function FeesPage() {
 
   const allFixtures = (fixturesRaw ?? []) as unknown as FixtureRow[];
 
-  // Only show fixtures involving a Kickstart team
+  // Show only Kickstart fixtures matching the selected age group
   const fixtures = allFixtures.filter(
-    (f) => f.home_team.is_kickstart || f.away_team.is_kickstart,
+    (f) =>
+      (f.home_team.is_kickstart || f.away_team.is_kickstart) &&
+      matchesAgeFilter(f.competition?.code, filter),
   );
 
   // Aggregate fee rows by fixture_id
@@ -90,14 +106,17 @@ export default async function FeesPage() {
     feesByFixture.set(fee.fixture_id, existing);
   }
 
-  // Season totals
+  // Season totals — scoped to the filtered fixtures so summary cards reflect the selected age
   let totalCashCents = 0;
   let totalPaid = 0;
   let totalExceptions = 0;
-  for (const stats of feesByFixture.values()) {
-    totalCashCents += stats.cashCents;
-    totalPaid += stats.paid;
-    totalExceptions += stats.exceptions;
+  for (const f of fixtures) {
+    const stats = feesByFixture.get(f.id);
+    if (stats) {
+      totalCashCents += stats.cashCents;
+      totalPaid += stats.paid;
+      totalExceptions += stats.exceptions;
+    }
   }
 
   return (
@@ -135,6 +154,10 @@ export default async function FeesPage() {
           </p>
         </div>
       </div>
+
+      <Suspense>
+        <AgeFilterPills />
+      </Suspense>
 
       {fixtures.length === 0 && (
         <p className="text-sm text-zinc-500">No Kickstart fixtures yet.</p>
