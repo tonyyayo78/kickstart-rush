@@ -7,6 +7,8 @@ import {
   matchesAgeFilter,
 } from "@/features/public-age-filter/age-filter";
 
+export const dynamic = "force-dynamic";
+
 const BARBADOS_TZ = "America/Barbados";
 
 function formatDateHeader(iso: string): string {
