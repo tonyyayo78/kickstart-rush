@@ -15,13 +15,15 @@ type Action = {
   key: "lineup" | "team-sheet" | "sub-cards" | "fees" | "live" | "result";
   label: string;
   href: string;
-  variant: "primary" | "primary-live" | "outline";
+  variant: "primary" | "primary-live" | "primary-done" | "outline";
 };
 
 const NAV_PRIMARY =
   "rounded bg-[#00267F] border-t border-t-[#3349A3] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm shadow-[#00267F]/30 transition-all hover:-translate-y-0.5 active:translate-y-0";
 const NAV_LIVE =
   "inline-flex items-center gap-1 rounded border border-red-300 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-red-600 transition-colors hover:border-red-500 hover:text-red-700";
+const NAV_DONE =
+  "rounded bg-emerald-600 border-t border-t-emerald-500 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm shadow-emerald-600/30 transition-all hover:-translate-y-0.5 hover:bg-emerald-700 active:translate-y-0";
 const NAV_OUTLINE =
   "rounded border border-zinc-300 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-zinc-600 transition-colors hover:border-[#00267F] hover:text-[#00267F]";
 const MENU_ITEM =
@@ -33,11 +35,12 @@ function pickPrimary(props: FixtureActionsProps): Action {
   const { fixtureId, isKickstart, hasLineup, hasResult, isPlayed, matchState } = props;
 
   if (!isKickstart) {
+    const done = hasResult || isPlayed;
     return {
       key: "result",
-      label: hasResult || isPlayed ? "Edit result" : "Enter result",
+      label: done ? "Update result" : "Enter result",
       href: `/fixtures/${fixtureId}/result`,
-      variant: "primary",
+      variant: done ? "primary-done" : "primary",
     };
   }
   if (["h1", "h1_stoppage", "h2", "h2_stoppage"].includes(matchState ?? "")) {
@@ -47,7 +50,7 @@ function pickPrimary(props: FixtureActionsProps): Action {
     return { key: "live", label: "Live · HT", href: `/fixtures/${fixtureId}/live`, variant: "primary-live" };
   }
   if (isPlayed || hasResult) {
-    return { key: "result", label: "Edit result", href: `/fixtures/${fixtureId}/result`, variant: "primary" };
+    return { key: "result", label: "Update result", href: `/fixtures/${fixtureId}/result`, variant: "primary-done" };
   }
   if (matchState === "full_time") {
     return { key: "result", label: "Enter result", href: `/fixtures/${fixtureId}/result`, variant: "primary" };
@@ -78,7 +81,7 @@ function buildOverflow(props: FixtureActionsProps, primaryKey: Action["key"]): A
     { key: "live", label: liveLabel, href: `/fixtures/${fixtureId}/live`, variant: "outline" },
     {
       key: "result",
-      label: hasResult || isPlayed ? "Edit result" : "Enter result",
+      label: hasResult || isPlayed ? "Update result" : "Enter result",
       href: `/fixtures/${fixtureId}/result`,
       variant: "outline",
     },
@@ -93,9 +96,11 @@ export default function FixtureActions(props: FixtureActionsProps) {
   const primaryClass =
     primary.variant === "primary-live"
       ? NAV_LIVE
-      : primary.variant === "primary"
-        ? NAV_PRIMARY
-        : NAV_OUTLINE;
+      : primary.variant === "primary-done"
+        ? NAV_DONE
+        : primary.variant === "primary"
+          ? NAV_PRIMARY
+          : NAV_OUTLINE;
 
   return (
     <div className="flex items-center gap-2">
