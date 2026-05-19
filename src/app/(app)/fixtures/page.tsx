@@ -40,7 +40,6 @@ function localDateKey(iso: string): string {
   }).format(new Date(iso));
 }
 
-type ResultScore = { home_score: number; away_score: number };
 type Team = { team_name: string; is_kickstart: boolean };
 type FixtureRow = {
   id: string;
@@ -51,8 +50,6 @@ type FixtureRow = {
   competition: { code: string };
   home_team: Team;
   away_team: Team;
-  results: ResultScore[] | null;
-  lineups: { id: string }[] | null;
 };
 
 export default async function FixturesPage({
@@ -65,12 +62,26 @@ export default async function FixturesPage({
 
   const supabase = await createServerClient();
 
-  const { data: fixturesRaw } = await supabase
-    .from("fixtures")
-    .select(
-      "id, kickoff_at, venue, status, match_state, competition:competition_id(code), home_team:home_team_id(team_name, is_kickstart), away_team:away_team_id(team_name, is_kickstart), results!fixture_id(home_score, away_score), lineups!fixture_id(id)",
-    )
-    .order("kickoff_at", { ascending: true });
+  const [{ data: fixturesRaw }, { data: resultsRaw }, { data: lineupsRaw }] =
+    await Promise.all([
+      supabase
+        .from("fixtures")
+        .select(
+          "id, kickoff_at, venue, status, match_state, competition:competition_id(code), home_team:home_team_id(team_name, is_kickstart), away_team:away_team_id(team_name, is_kickstart)",
+        )
+        .order("kickoff_at", { ascending: true }),
+      supabase.from("results").select("fixture_id, home_score, away_score"),
+      supabase.from("lineups").select("fixture_id"),
+    ]);
+
+  const resultsByFixture = new Map<string, { home_score: number; away_score: number }>();
+  for (const r of (resultsRaw ?? []) as { fixture_id: string; home_score: number; away_score: number }[]) {
+    resultsByFixture.set(r.fixture_id, { home_score: r.home_score, away_score: r.away_score });
+  }
+  const lineupFixtureIds = new Set<string>();
+  for (const l of (lineupsRaw ?? []) as { fixture_id: string }[]) {
+    lineupFixtureIds.add(l.fixture_id);
+  }
 
   const fixtures = ((fixturesRaw ?? []) as unknown as FixtureRow[])
     .filter((f) => matchesAgeFilter(f.competition.code, filter));
@@ -106,9 +117,9 @@ export default async function FixturesPage({
             {dayFixtures.map((f) => {
               const isKickstart =
                 f.home_team.is_kickstart || f.away_team.is_kickstart;
-              const score = f.results?.[0] ?? null;
+              const score = resultsByFixture.get(f.id) ?? null;
               const isPlayed = f.status === "played" && score !== null;
-              const hasLineup = (f.lineups?.length ?? 0) > 0;
+              const hasLineup = lineupFixtureIds.has(f.id);
 
               return (
                 <li
@@ -172,7 +183,7 @@ export default async function FixturesPage({
                         fixtureId={f.id}
                         isKickstart={isKickstart}
                         hasLineup={hasLineup}
-                        hasResult={(f.results?.length ?? 0) > 0}
+                        hasResult={resultsByFixture.has(f.id)}
                         isPlayed={isPlayed}
                         matchState={f.match_state}
                       />
