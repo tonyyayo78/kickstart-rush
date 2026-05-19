@@ -1,0 +1,151 @@
+.sheet {
+  --bfa-navy: #003d7a;
+  --bfa-yellow: #ffc72c;
+  --ink: #0a0a0a;
+  --rule: #1a1a1a;
+  --rule-soft: #888;
+
+  width: 210mm;
+  min-height: 297mm;
+  margin: 16px auto;
+  padding: 10mm;
+  background: white;
+  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 0;
+  width: 100%;
+  height: 277mm;
+}
+
+.cell {
+  border: 1px dashed #aaa;
+  padding: 6mm;
+  display: flex;
+  align-items: stretch;
+  box-sizing: border-box;
+}
+
+.card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.cardHeader {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.cardTitle {
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.nycLogo {
+  display: block;
+  height: 54px;
+  width: auto;
+  object-fit: contain;
+}
+
+.fieldRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: end;
+}
+
+.fieldRowSingle {
+  grid-template-columns: 1fr;
+}
+
+.fieldCell {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-height: 18px;
+}
+
+.fieldLbl {
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fieldLine {
+  flex: 1;
+  border-bottom: 1px solid var(--ink);
+  font-weight: 500;
+  padding-bottom: 1px;
+  min-width: 0;
+}
+
+.fieldLine:empty::after {
+  content: "\00a0";
+}
+
+.officialBand {
+  background: #e5e5e5;
+  padding: 6px 8px;
+  margin-top: 6px;
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.officialBandTitle {
+  font-style: italic;
+  font-size: 10px;
+  text-align: center;
+  font-weight: 600;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 8mm;
+}
+
+@media print {
+  :global([data-app-chrome="true"]) {
+    display: none !important;
+  }
+  :global(main) {
+    padding: 0 !important;
+  }
+  :global(.print-controls) {
+    display: none !important;
+  }
+  :global(html),
+  :global(body) {
+    background: white !important;
+  }
+  .sheet {
+    margin: 0;
+    box-shadow: none;
+    padding: 8mm;
+    width: auto;
+    min-height: auto;
+  }
+  .cell {
+    border: 1px dashed #666;
+    break-inside: avoid;
+  }
+}

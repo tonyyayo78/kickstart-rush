@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import { createServerClient } from "@/lib/supabase/server";
+import FixtureActions from "./_components/FixtureActions";
 import AgeFilterPills from "@/features/public-age-filter/AgeFilterPills";
 import {
   parseAgeParam,
@@ -107,17 +107,6 @@ export default async function FixturesPage({
               const score = f.results?.[0] ?? null;
               const isPlayed = f.status === "played" && score !== null;
               const hasLineup = (f.lineups?.length ?? 0) > 0;
-              const liveInProgress = ["h1", "h1_stoppage", "h2", "h2_stoppage"].includes(
-                f.match_state ?? "",
-              );
-              const liveLabel =
-                liveInProgress
-                  ? "Live"
-                  : f.match_state === "halftime"
-                  ? "Live · HT"
-                  : f.match_state === "full_time"
-                  ? "Match Events"
-                  : "Live Tracker";
 
               return (
                 <li
@@ -177,43 +166,14 @@ export default async function FixturesPage({
                           {f.venue}
                         </span>
                       )}
-                      {isKickstart && (
-                        <Link
-                          href={`/fixtures/${f.id}/lineup`}
-                          className="rounded border border-zinc-300 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-zinc-600 transition-colors hover:border-[#00267F] hover:text-[#00267F]"
-                        >
-                          {hasLineup ? "Lineup ✓" : "Lineup"}
-                        </Link>
-                      )}
-                      {isKickstart && (
-                        <Link
-                          href={`/fixtures/${f.id}/fees`}
-                          className="rounded border border-zinc-300 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-zinc-600 transition-colors hover:border-[#00267F] hover:text-[#00267F]"
-                        >
-                          Fees
-                        </Link>
-                      )}
-                      {isKickstart && (
-                        <Link
-                          href={`/fixtures/${f.id}/live`}
-                          className={`rounded border px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${
-                            liveInProgress
-                              ? "border-red-300 text-red-600 hover:border-red-500 hover:text-red-700"
-                              : "border-zinc-300 text-zinc-600 hover:border-[#00267F] hover:text-[#00267F]"
-                          }`}
-                        >
-                          {liveInProgress && (
-                            <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-red-500 align-middle" />
-                          )}
-                          {liveLabel}
-                        </Link>
-                      )}
-                      <Link
-                        href={`/fixtures/${f.id}/result`}
-                        className="rounded bg-[#00267F] border-t border-t-[#3349A3] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm shadow-[#00267F]/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
-                      >
-                        {isPlayed ? "Edit result" : "Enter result"}
-                      </Link>
+                      <FixtureActions
+                        fixtureId={f.id}
+                        isKickstart={isKickstart}
+                        hasLineup={hasLineup}
+                        hasResult={(f.results?.length ?? 0) > 0}
+                        isPlayed={isPlayed}
+                        matchState={f.match_state}
+                      />
                     </div>
                   </div>
                 </li>
