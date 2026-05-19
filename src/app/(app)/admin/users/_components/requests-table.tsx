@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { approveRequest, denyRequest } from "../actions";
+import SquadsCheckboxGrid, { type SquadOption } from "./squads-checkbox-grid";
 
 export type PendingRequest = {
   id: string;
@@ -11,6 +12,7 @@ export type PendingRequest = {
   notes: string | null;
   requested_at: string;
   squads: string;
+  squadIds: string[];
 };
 
 export type DecidedRequest = {
@@ -78,9 +80,11 @@ function SortTh({
 export function RequestsTable({
   rows,
   historyRows,
+  allSquads,
 }: {
   rows: PendingRequest[];
   historyRows: DecidedRequest[];
+  allSquads: SquadOption[];
 }) {
   const [sortKey, setSortKey] = useState<SortKey>("requested_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -170,27 +174,33 @@ export function RequestsTable({
                   <td className="px-4 py-2 max-w-xs text-xs text-zinc-400 italic truncate">
                     {r.notes ? `"${r.notes}"` : "—"}
                   </td>
-                  <td className="px-4 py-2 text-right">
-                    <div className="flex justify-end gap-2">
-                      <form action={approveRequest}>
-                        <input type="hidden" name="requestId" value={r.id} />
-                        <button
-                          type="submit"
-                          className="rounded-md bg-[#00267F] px-3 py-1 text-xs font-bold uppercase tracking-wide text-white hover:bg-[#3349A3]"
-                        >
-                          Approve
-                        </button>
-                      </form>
-                      <form action={denyRequest}>
-                        <input type="hidden" name="requestId" value={r.id} />
-                        <button
-                          type="submit"
-                          className="rounded-md border border-red-300 px-3 py-1 text-xs font-bold uppercase tracking-wide text-red-700 hover:bg-red-50"
-                        >
-                          Deny
-                        </button>
-                      </form>
-                    </div>
+                  <td className="px-4 py-2">
+                    <form action={approveRequest} className="flex flex-col gap-2">
+                      <input type="hidden" name="requestId" value={r.id} />
+                      <p className="text-xs text-zinc-500">
+                        Requested squads: {r.squads || "(none)"} — adjust below if needed.
+                      </p>
+                      <SquadsCheckboxGrid
+                        allSquads={allSquads}
+                        selectedIds={r.squadIds}
+                        name="squadIds"
+                      />
+                      <button
+                        type="submit"
+                        className="self-start rounded-md bg-[#00267F] px-3 py-1 text-xs font-bold uppercase tracking-wide text-white hover:bg-[#3349A3]"
+                      >
+                        Approve
+                      </button>
+                    </form>
+                    <form action={denyRequest} className="mt-2">
+                      <input type="hidden" name="requestId" value={r.id} />
+                      <button
+                        type="submit"
+                        className="rounded-md border border-red-300 px-3 py-1 text-xs font-bold uppercase tracking-wide text-red-700 hover:bg-red-50"
+                      >
+                        Deny
+                      </button>
+                    </form>
                   </td>
                 </tr>
               ))}

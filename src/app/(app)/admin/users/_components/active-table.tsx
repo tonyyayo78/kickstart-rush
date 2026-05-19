@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { forceLogout, suspend, remove } from "../actions";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { forceLogout, suspend, remove, updateUserSquads } from "../actions";
 import { StatusPill } from "./status-pill";
 import type { UserStatus } from "./status-pill";
+import SquadsCheckboxGrid, { type SquadOption } from "./squads-checkbox-grid";
 
 export type ActiveUser = {
   id: string;
@@ -11,6 +12,7 @@ export type ActiveUser = {
   role: string | null;
   isApprover: boolean;
   squads: string;
+  squadIds: string[];
   lastActiveAt: string | null;
   lastSignInAt: string | null;
   status: UserStatus;
@@ -109,7 +111,7 @@ function RowMenu({ user, approverId }: { user: ActiveUser; approverId: string })
   );
 }
 
-export function ActiveTable({ rows, approverId }: { rows: ActiveUser[]; approverId: string }) {
+export function ActiveTable({ rows, approverId, allSquads }: { rows: ActiveUser[]; approverId: string; allSquads: SquadOption[] }) {
   const [sortKey, setSortKey] = useState<SortKey>("displayName");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [rawSearch, setRawSearch] = useState("");
@@ -183,27 +185,50 @@ export function ActiveTable({ rows, approverId }: { rows: ActiveUser[]; approver
             </thead>
             <tbody>
               {sorted.map((u) => (
-                <tr key={u.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50">
-                  <td className="px-4 py-2 text-zinc-600">{u.email}</td>
-                  <td className="px-4 py-2 font-medium text-zinc-900">
-                    {u.displayName}
-                    {u.isApprover && (
-                      <span className="ml-1 text-xs font-normal text-[#00267F]">(approver)</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 text-zinc-600">{u.role ?? "—"}</td>
-                  <td className="px-4 py-2 text-zinc-600">{u.squads || "—"}</td>
-                  <td className="px-4 py-2"><StatusPill status={u.status} /></td>
-                  <td className="px-4 py-2 font-mono text-xs text-zinc-500 tabular-nums" title={abs(u.lastSignInAt)}>
-                    {rel(u.lastSignInAt)}
-                  </td>
-                  <td className="px-4 py-2 font-mono text-xs text-zinc-500 tabular-nums" title={abs(u.lastActiveAt)}>
-                    {rel(u.lastActiveAt)}
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    <RowMenu user={u} approverId={approverId} />
-                  </td>
-                </tr>
+                <Fragment key={u.id}>
+                  <tr className="border-b border-zinc-100 hover:bg-zinc-50">
+                    <td className="px-4 py-2 text-zinc-600">{u.email}</td>
+                    <td className="px-4 py-2 font-medium text-zinc-900">
+                      {u.displayName}
+                      {u.isApprover && (
+                        <span className="ml-1 text-xs font-normal text-[#00267F]">(approver)</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-zinc-600">{u.role ?? "—"}</td>
+                    <td className="px-4 py-2 text-zinc-600">{u.squads || "—"}</td>
+                    <td className="px-4 py-2"><StatusPill status={u.status} /></td>
+                    <td className="px-4 py-2 font-mono text-xs text-zinc-500 tabular-nums" title={abs(u.lastSignInAt)}>
+                      {rel(u.lastSignInAt)}
+                    </td>
+                    <td className="px-4 py-2 font-mono text-xs text-zinc-500 tabular-nums" title={abs(u.lastActiveAt)}>
+                      {rel(u.lastActiveAt)}
+                    </td>
+                    <td className="px-4 py-2 text-right">
+                      <RowMenu user={u} approverId={approverId} />
+                    </td>
+                  </tr>
+                  {u.id !== approverId && (
+                    <tr className="border-b border-zinc-100">
+                      <td colSpan={8} className="px-4 pb-3 pt-0">
+                        <details className="rounded-md border border-zinc-200 bg-zinc-50 p-2">
+                          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-zinc-600 hover:text-[#00267F] [&::-webkit-details-marker]:hidden">
+                            Manage squads
+                          </summary>
+                          <form action={updateUserSquads} className="mt-3 flex flex-col gap-3">
+                            <input type="hidden" name="userId" value={u.id} />
+                            <SquadsCheckboxGrid allSquads={allSquads} selectedIds={u.squadIds} name="squadIds" />
+                            <button
+                              type="submit"
+                              className="self-start rounded-md bg-[#00267F] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white hover:bg-[#3349A3] transition-colors"
+                            >
+                              Save squads
+                            </button>
+                          </form>
+                        </details>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>
