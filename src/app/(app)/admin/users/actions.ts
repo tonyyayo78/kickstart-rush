@@ -71,9 +71,15 @@ export async function approveRequest(formData: FormData): Promise<void> {
     throw new Error(`Profile creation failed: ${profileErr.message}`);
   }
 
-  const squadIds = (req.access_request_teams as { squad_id: string }[]).map(
+  // Approver may override the requested squads via form-supplied squadIds[].
+  // Fall back to access_request_teams if no override is provided.
+  const overrideSquadIds = formData.getAll("squadIds").filter(
+    (v): v is string => typeof v === "string" && v.length > 0,
+  );
+  const requestedSquadIds = (req.access_request_teams as { squad_id: string }[]).map(
     (t) => t.squad_id,
   );
+  const squadIds = overrideSquadIds.length > 0 ? overrideSquadIds : requestedSquadIds;
 
   if (squadIds.length > 0) {
     const { error: teamsErr } = await admin
@@ -101,7 +107,9 @@ export async function approveRequest(formData: FormData): Promise<void> {
 
   await writeAudit(approver.id, "admin.approve_request", newUserId, {
     request_id: requestId,
+    requested_squads: requestedSquadIds,
     granted_squads: squadIds,
+    overrode_request: overrideSquadIds.length > 0,
   });
 
   REVALIDATE();
@@ -268,6 +276,51 @@ export async function purge(formData: FormData): Promise<void> {
     }
     throw new Error(`Purge failed: ${deleteErr.message}`);
   }
+
+  REVALIDATE();
+}
+
+export async function updateUserSquads(formData: FormData): Promise<void> {
+  const approver = await requireApprover();
+  const userId = formData.get("userId") as string;
+  if (!userId) return;
+  selfGuard(approver.id, userId);
+
+  const newSquadIds = formData.getAll("squadIds").filter(
+    (v): v is string => typeof v === "string" && v.length > 0,
+  );
+
+  const admin = createAdminClient();
+
+  // Snapshot existing squads for the audit log.
+  const { data: existing } = await admin
+    .from("profile_teams")
+    .select("squad_id")
+    .eq("profile_id", userId);
+  const beforeSquadIds = ((existing ?? []) as { squad_id: string }[]).map(
+    (r) => r.squad_id,
+  );
+
+  // Atomic replace: delete all rows for this profile, then insert the new set.
+  const { error: clearErr } = await admin
+    .from("profile_teams")
+    .delete()
+    .eq("profile_id", userId);
+  if (clearErr) throw new Error(`Failed to clear squads: ${clearErr.message}`);
+
+  if (newSquadIds.length > 0) {
+    const { error: insertErr } = await admin
+      .from("profile_teams")
+      .insert(newSquadIds.map((squad_id) => ({ profile_id: userId, squad_id })));
+    if (insertErr) {
+      throw new Error(`Failed to set squads: ${insertErr.message}`);
+    }
+  }
+
+  await writeAudit(approver.id, "admin.update_user_squads", userId, {
+    before: beforeSquadIds,
+    after: newSquadIds,
+  });
 
   REVALIDATE();
 }

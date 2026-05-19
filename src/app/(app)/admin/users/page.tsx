@@ -8,7 +8,7 @@ import { SuspendedTable } from "./_components/suspended-table";
 import { RemovedTable } from "./_components/removed-table";
 import type { DecidedRequest } from "./_components/requests-table";
 
-type Squad = { code: string; name: string } | null;
+type Squad = { id: string; code: string; name: string } | null;
 type ProfileRow = {
   id: string;
   email: string;
@@ -29,7 +29,7 @@ type PendingRequestRow = {
   role: string;
   notes: string | null;
   requested_at: string;
-  access_request_teams: { squads: { name: string } | null }[];
+  access_request_teams: { squads: { id: string; name: string } | null }[];
 };
 
 type DecidedRequestRow = {
@@ -49,6 +49,10 @@ type Tab = (typeof TABS)[number];
 
 function squadsOf(p: ProfileRow): string {
   return p.profile_teams.map((t) => t.squads?.code ?? "").filter(Boolean).join(", ");
+}
+
+function squadIdsOf(p: ProfileRow): string[] {
+  return p.profile_teams.map((t) => t.squads?.id).filter((id): id is string => !!id);
 }
 
 function displayNameOf(p: ProfileRow): string {
@@ -71,11 +75,12 @@ export default async function AdminUsersPage({
     { data: authData },
     { data: pendingReqs },
     { data: decidedReqs },
+    { data: allSquadsRaw },
   ] = await Promise.all([
     admin
       .from("profiles")
       .select(
-        "id, email, display_name, first_name, role, is_approver, last_active_at, removed_at, profile_teams(squads(code,name))",
+        "id, email, display_name, first_name, role, is_approver, last_active_at, removed_at, profile_teams(squads(id,code,name))",
       )
       .order("display_name", { ascending: true })
       .returns<ProfileRow[]>(),
@@ -83,7 +88,7 @@ export default async function AdminUsersPage({
     admin
       .from("access_requests")
       .select(
-        "id, email, first_name, last_name, role, notes, requested_at, access_request_teams(squads(name))",
+        "id, email, first_name, last_name, role, notes, requested_at, access_request_teams(squads(id, name))",
       )
       .eq("status", "pending")
       .order("requested_at", { ascending: true })
@@ -98,7 +103,13 @@ export default async function AdminUsersPage({
       .order("decided_at", { ascending: false })
       .limit(50)
       .returns<DecidedRequestRow[]>(),
+    admin
+      .from("squads")
+      .select("id, code, name")
+      .order("code"),
   ]);
+
+  const allSquads = (allSquadsRaw ?? []) as { id: string; code: string; name: string }[];
 
   const allProfiles = profiles ?? [];
   const authUsers: User[] = authData?.users ?? [];
@@ -146,6 +157,7 @@ export default async function AdminUsersPage({
     notes: r.notes,
     requested_at: r.requested_at,
     squads: r.access_request_teams.map((t) => t.squads?.name ?? "").filter(Boolean).join(", "),
+    squadIds: r.access_request_teams.map((t) => t.squads?.id).filter((id): id is string => !!id),
   }));
 
   const historyRows: DecidedRequest[] = decided.map((r) => ({
@@ -169,6 +181,7 @@ export default async function AdminUsersPage({
       role: p.role,
       isApprover: p.is_approver,
       squads: squadsOf(p),
+      squadIds: squadIdsOf(p),
       lastActiveAt: p.last_active_at,
       lastSignInAt: a?.last_sign_in_at ?? null,
       status: resolveStatus(
@@ -241,8 +254,8 @@ export default async function AdminUsersPage({
 
       {/* Table panel */}
       <div className="rounded-b-lg rounded-tr-lg border border-t-0 border-zinc-200 bg-white">
-        {tab === "requests"  && <RequestsTable rows={pendingRows} historyRows={historyRows} />}
-        {tab === "active"    && <ActiveTable rows={activeRows} approverId={approver.id} />}
+        {tab === "requests"  && <RequestsTable rows={pendingRows} historyRows={historyRows} allSquads={allSquads} />}
+        {tab === "active"    && <ActiveTable rows={activeRows} approverId={approver.id} allSquads={allSquads} />}
         {tab === "suspended" && <SuspendedTable rows={suspendedRows} />}
         {tab === "removed"   && <RemovedTable rows={removedRows} />}
       </div>
