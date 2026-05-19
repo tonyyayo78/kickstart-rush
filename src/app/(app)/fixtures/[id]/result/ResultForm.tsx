@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import type { ResultActionState } from "@/features/results/actions";
 
 type Player = {
@@ -152,7 +152,7 @@ export default function ResultForm({
     initialScorers(existingResult),
   );
   const [cards, setCards] = useState<CardEntry[]>(() => initialCards(existingCards));
-  const [submitting, setSubmitting] = useState(false);
+  const [pending, startTransition] = useTransition();
 
   const homeScorers = scorers.filter((s) => s.competitionTeamId === homeTeam.id).length;
   const awayScorers = scorers.filter((s) => s.competitionTeamId === awayTeam.id).length;
@@ -214,8 +214,6 @@ export default function ResultForm({
       return;
     }
 
-    setSubmitting(true);
-
     const input = {
       fixtureId,
       homeScore,
@@ -235,12 +233,13 @@ export default function ResultForm({
       })),
     };
 
-    const result = await action(input);
-    if (result?.error) {
-      setError(result.error);
-      setSubmitting(false);
-    }
-    // On success, action redirects — component unmounts
+    startTransition(async () => {
+      const result = await action(input);
+      if (result?.error) {
+        setError(result.error);
+      }
+      // On success, action redirects — component unmounts before this line runs
+    });
   }
 
   const playersFor = (teamId: string) =>
@@ -559,10 +558,10 @@ export default function ResultForm({
       <div className="flex items-center gap-3">
         <button
           type="submit"
-          disabled={submitting || homeTooMany || awayTooMany}
+          disabled={pending || homeTooMany || awayTooMany}
           className="rounded-md bg-[#00267F] border-t border-t-[#3349A3] px-4 py-2 text-sm font-bold uppercase tracking-wide text-white shadow-md shadow-[#00267F]/30 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
         >
-          {submitting ? "Saving…" : isEdit ? "Update result" : "Save result"}
+          {pending ? "Saving…" : isEdit ? "Update result" : "Save result"}
         </button>
         <a
           href="/fixtures"
