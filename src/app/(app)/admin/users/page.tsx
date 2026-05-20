@@ -8,6 +8,7 @@ import { SuspendedTable } from "./_components/suspended-table";
 import { RemovedTable } from "./_components/removed-table";
 import type { DecidedRequest } from "./_components/requests-table";
 import InviteUserPanel from "./_components/invite-user-panel";
+import WarningBanner from "./_components/warning-banner";
 
 type Squad = { id: string; code: string; name: string } | null;
 type ProfileRow = {
@@ -229,12 +230,7 @@ export default async function AdminUsersPage({
       </h1>
       <div className="mt-2 mb-6 h-1 w-16 bg-[#FFC726]" />
 
-      {warning && (
-        <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 p-4">
-          <p className="text-sm font-semibold text-amber-900">Action completed with a warning</p>
-          <p className="mt-1 break-all font-mono text-xs text-amber-800">{warning}</p>
-        </div>
-      )}
+      {warning && <WarningBanner warning={warning} />}
 
       {tab === "requests" && <InviteUserPanel allSquads={allSquads} />}
 
