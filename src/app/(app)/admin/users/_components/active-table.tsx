@@ -1,6 +1,6 @@
 "use client";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { forceLogout, suspend, remove, updateUserSquads } from "../actions";
+import { forceLogout, suspend, remove, updateUserSquads, regenerateMagicLink } from "../actions";
 import { StatusPill } from "./status-pill";
 import type { UserStatus } from "./status-pill";
 import SquadsCheckboxGrid, { type SquadOption } from "./squads-checkbox-grid";
@@ -204,7 +204,21 @@ export function ActiveTable({ rows, approverId, allSquads }: { rows: ActiveUser[
                       {rel(u.lastActiveAt)}
                     </td>
                     <td className="px-4 py-2 text-right">
-                      <RowMenu user={u} approverId={approverId} />
+                      <div className="flex items-center justify-end gap-2">
+                        {!u.lastSignInAt && u.id !== approverId && (
+                          <form action={regenerateMagicLink}>
+                            <input type="hidden" name="userId" value={u.id} />
+                            <button
+                              type="submit"
+                              title="Generate a new magic link for this user (they haven't signed in yet)"
+                              className="rounded-md border border-amber-300 px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-50"
+                            >
+                              Send link
+                            </button>
+                          </form>
+                        )}
+                        <RowMenu user={u} approverId={approverId} />
+                      </div>
                     </td>
                   </tr>
                   {u.id !== approverId && (

@@ -1,5 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireApprover } from "@/lib/auth/require-approver";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -26,6 +27,56 @@ function selfGuard(approverId: string, targetId: string) {
   }
 }
 
+type CreatedUser = {
+  userId: string;
+  magicLink: string;
+};
+
+/**
+ * Creates an auth user without sending Supabase's built-in invite email,
+ * then generates a one-time magic link for the approver to deliver manually.
+ * Decouples user creation from SMTP — works regardless of mail rate limits.
+ */
+async function createUserWithMagicLink(
+  admin: ReturnType<typeof createAdminClient>,
+  email: string,
+  redirectPath: string = "/dashboard",
+): Promise<CreatedUser> {
+  const siteUrl =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
+
+  const { data: created, error: createErr } = await admin.auth.admin.createUser({
+    email,
+    email_confirm: true,
+  });
+  if (createErr || !created.user) {
+    throw new Error(`User creation failed: ${createErr?.message ?? "unknown error"}`);
+  }
+
+  const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+    type: "magiclink",
+    email,
+    options: {
+      redirectTo: `${siteUrl}${redirectPath}`,
+    },
+  });
+
+  if (linkErr || !linkData.properties?.action_link) {
+    try {
+      await admin.auth.admin.deleteUser(created.user.id);
+    } catch (e) {
+      console.error("[createUserWithMagicLink] orphan cleanup failed:", e);
+    }
+    throw new Error(`Magic link generation failed: ${linkErr?.message ?? "unknown error"}`);
+  }
+
+  return {
+    userId: created.user.id,
+    magicLink: linkData.properties.action_link,
+  };
+}
+
 export async function approveRequest(formData: FormData): Promise<void> {
   const approver = await requireApprover();
   const requestId = formData.get("requestId") as string;
@@ -42,12 +93,15 @@ export async function approveRequest(formData: FormData): Promise<void> {
   if (reqErr || !req) throw new Error("Request not found.");
   if (req.status !== "pending") throw new Error("Request is no longer pending.");
 
-  const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(req.email);
-  if (inviteErr || !invited.user) {
-    throw new Error(`Invite failed: ${inviteErr?.message ?? "unknown error"}`);
+  let userId: string;
+  let magicLink: string;
+  try {
+    ({ userId, magicLink } = await createUserWithMagicLink(admin, req.email));
+  } catch (e) {
+    throw e;
   }
 
-  const newUserId = invited.user.id;
+  const newUserId = userId;
   const displayName =
     [req.first_name, req.last_name].filter(Boolean).join(" ") || req.email;
 
@@ -110,9 +164,16 @@ export async function approveRequest(formData: FormData): Promise<void> {
     requested_squads: requestedSquadIds,
     granted_squads: squadIds,
     overrode_request: overrideSquadIds.length > 0,
+    magic_link: magicLink,
   });
 
   REVALIDATE();
+
+  const params = new URLSearchParams({
+    magic: magicLink,
+    email: req.email,
+  });
+  redirect(`/admin/users?${params.toString()}`);
 }
 
 export async function denyRequest(formData: FormData): Promise<void> {
@@ -323,4 +384,128 @@ export async function updateUserSquads(formData: FormData): Promise<void> {
   });
 
   REVALIDATE();
+}
+
+export async function regenerateMagicLink(formData: FormData): Promise<void> {
+  const approver = await requireApprover();
+  const userId = formData.get("userId") as string;
+  if (!userId) return;
+  selfGuard(approver.id, userId);
+
+  const admin = createAdminClient();
+
+  const { data: profile, error: profErr } = await admin
+    .from("profiles")
+    .select("email")
+    .eq("id", userId)
+    .single();
+  if (profErr || !profile) throw new Error("User not found.");
+
+  const { data: authData } = await admin.auth.admin.getUserById(userId);
+  if (authData?.user?.last_sign_in_at) {
+    throw new Error("User has already signed in. Direct them to /sign-in.");
+  }
+
+  const siteUrl =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
+
+  const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+    type: "magiclink",
+    email: profile.email,
+    options: {
+      redirectTo: `${siteUrl}/dashboard`,
+    },
+  });
+
+  if (linkErr || !linkData.properties?.action_link) {
+    throw new Error(`Magic link generation failed: ${linkErr?.message ?? "unknown error"}`);
+  }
+
+  await writeAudit(approver.id, "admin.regenerate_magic_link", userId, {
+    magic_link: linkData.properties.action_link,
+  });
+
+  REVALIDATE();
+
+  const params = new URLSearchParams({
+    magic: linkData.properties.action_link,
+    email: profile.email,
+  });
+  redirect(`/admin/users?${params.toString()}`);
+}
+
+export async function inviteUser(formData: FormData): Promise<void> {
+  const approver = await requireApprover();
+  const email = ((formData.get("email") as string) ?? "").trim().toLowerCase();
+  const firstName = ((formData.get("firstName") as string) ?? "").trim();
+  const lastName = ((formData.get("lastName") as string) ?? "").trim();
+  const role = ((formData.get("role") as string) ?? "").trim() || "Coach";
+  const squadIds = formData.getAll("squadIds").filter(
+    (v): v is string => typeof v === "string" && v.length > 0,
+  );
+
+  if (!email) throw new Error("Email is required.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error("Email format is invalid.");
+  }
+
+  const admin = createAdminClient();
+
+  const { data: existingAuth } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  const dup = existingAuth?.users.find((u) => u.email?.toLowerCase() === email);
+  if (dup) {
+    throw new Error(`A user with email ${email} already exists.`);
+  }
+
+  const { userId, magicLink } = await createUserWithMagicLink(admin, email);
+
+  const displayName = [firstName, lastName].filter(Boolean).join(" ") || email;
+
+  const { error: profileErr } = await admin.from("profiles").insert({
+    id: userId,
+    email,
+    first_name: firstName || null,
+    display_name: displayName,
+    role,
+    status: "active",
+    is_approver: false,
+  });
+
+  if (profileErr) {
+    try {
+      await admin.auth.admin.deleteUser(userId);
+    } catch (e) {
+      console.error("[inviteUser] orphan cleanup failed:", e);
+    }
+    throw new Error(`Profile creation failed: ${profileErr.message}`);
+  }
+
+  if (squadIds.length > 0) {
+    const { error: teamsErr } = await admin
+      .from("profile_teams")
+      .insert(squadIds.map((squad_id) => ({ profile_id: userId, squad_id })));
+    if (teamsErr) {
+      try {
+        await admin.auth.admin.deleteUser(userId);
+      } catch (e) {
+        console.error("[inviteUser] orphan cleanup failed:", e);
+      }
+      throw new Error(`Team linking failed: ${teamsErr.message}`);
+    }
+  }
+
+  await writeAudit(approver.id, "admin.invite_user", userId, {
+    invited_email: email,
+    granted_squads: squadIds,
+    magic_link: magicLink,
+  });
+
+  REVALIDATE();
+
+  const params = new URLSearchParams({
+    magic: magicLink,
+    email,
+  });
+  redirect(`/admin/users?${params.toString()}`);
 }

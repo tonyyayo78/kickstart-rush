@@ -7,6 +7,8 @@ import { ActiveTable } from "./_components/active-table";
 import { SuspendedTable } from "./_components/suspended-table";
 import { RemovedTable } from "./_components/removed-table";
 import type { DecidedRequest } from "./_components/requests-table";
+import MagicLinkToast from "./_components/magic-link-toast";
+import InviteUserPanel from "./_components/invite-user-panel";
 
 type Squad = { id: string; code: string; name: string } | null;
 type ProfileRow = {
@@ -227,6 +229,10 @@ export default async function AdminUsersPage({
         User Admin
       </h1>
       <div className="mt-2 mb-6 h-1 w-16 bg-[#FFC726]" />
+
+      <MagicLinkToast />
+
+      {tab === "requests" && <InviteUserPanel allSquads={allSquads} />}
 
       {/* Tab strip */}
       <div className="flex border-b border-zinc-200">
