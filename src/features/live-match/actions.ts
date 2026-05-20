@@ -237,3 +237,87 @@ export async function updateGoal(
   revalidatePublic();
   return null;
 }
+
+// ── Substitution actions ─────────────────────────────────────
+
+export async function logSubstitution(
+  fixtureId: string,
+  data: {
+    half: 1 | 2;
+    minute: number;
+    stoppageMinutes: number;
+    playerOutId: string;
+    playerInId: string;
+  },
+): Promise<ActionResult> {
+  const supabase = await authed();
+
+  if (data.playerOutId === data.playerInId) {
+    return { error: "Player out and player in must be different." };
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { error } = await supabase.from("substitutions").insert({
+    fixture_id: fixtureId,
+    player_out_id: data.playerOutId,
+    player_in_id: data.playerInId,
+    half: data.half,
+    minute: data.minute,
+    stoppage_minutes: data.stoppageMinutes,
+    recorded_by: user?.id ?? null,
+  });
+  if (error) return { error: "Failed to log substitution." };
+  live(fixtureId);
+  return null;
+}
+
+export async function deleteSubstitution(
+  subId: string,
+  fixtureId: string,
+): Promise<ActionResult> {
+  const supabase = await authed();
+  const { error } = await supabase
+    .from("substitutions")
+    .delete()
+    .eq("id", subId)
+    .eq("fixture_id", fixtureId);
+  if (error) return { error: "Failed to delete substitution." };
+  live(fixtureId);
+  return null;
+}
+
+export async function updateSubstitution(
+  subId: string,
+  fixtureId: string,
+  data: {
+    half: 1 | 2;
+    minute: number;
+    stoppageMinutes: number;
+    playerOutId: string;
+    playerInId: string;
+  },
+): Promise<ActionResult> {
+  const supabase = await authed();
+
+  if (data.playerOutId === data.playerInId) {
+    return { error: "Player out and player in must be different." };
+  }
+
+  const { error } = await supabase
+    .from("substitutions")
+    .update({
+      half: data.half,
+      minute: data.minute,
+      stoppage_minutes: data.stoppageMinutes,
+      player_out_id: data.playerOutId,
+      player_in_id: data.playerInId,
+    })
+    .eq("id", subId)
+    .eq("fixture_id", fixtureId);
+  if (error) return { error: "Failed to update substitution." };
+  live(fixtureId);
+  return null;
+}

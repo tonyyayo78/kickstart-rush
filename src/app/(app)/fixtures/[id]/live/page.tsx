@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createServerClient } from "@/lib/supabase/server";
-import LiveMatchTracker, { type GoalRow, type MatchState, type PlayerOption } from "@/features/live-match/LiveMatchTracker";
+import LiveMatchTracker, { type GoalRow, type MatchState, type PlayerOption, type SubstitutionRow } from "@/features/live-match/LiveMatchTracker";
 
 const BARBADOS_TZ = "America/Barbados";
 const FMT = new Intl.DateTimeFormat("en-BB", {
@@ -107,6 +107,48 @@ export default async function LiveMatchPage({
     });
   }
 
+  // ── Substitutions ─────────────────────────────────────────────
+  type RawSubRow = {
+    id: string;
+    half: number;
+    minute: number;
+    stoppage_minutes: number;
+    player_out_id: string;
+    player_in_id: string;
+    out_player: { first_name: string; last_name: string; jersey_number: number | null } | null;
+    in_player: { first_name: string; last_name: string; jersey_number: number | null } | null;
+  };
+
+  const { data: subsRaw } = await supabase
+    .from("substitutions")
+    .select(`
+      id, half, minute, stoppage_minutes,
+      player_out_id, player_in_id,
+      out_player:player_out_id(first_name, last_name, jersey_number),
+      in_player:player_in_id(first_name, last_name, jersey_number)
+    `)
+    .eq("fixture_id", id)
+    .order("half", { ascending: true })
+    .order("minute", { ascending: true })
+    .order("stoppage_minutes", { ascending: true });
+
+  const substitutions: SubstitutionRow[] = ((subsRaw ?? []) as unknown as RawSubRow[]).map((s) => ({
+    id: s.id,
+    half: s.half,
+    minute: s.minute,
+    stoppage_minutes: s.stoppage_minutes,
+    player_out_id: s.player_out_id,
+    player_out_name: s.out_player
+      ? `${s.out_player.first_name} ${s.out_player.last_name}`
+      : "Unknown",
+    player_out_kit: s.out_player?.jersey_number ?? null,
+    player_in_id: s.player_in_id,
+    player_in_name: s.in_player
+      ? `${s.in_player.first_name} ${s.in_player.last_name}`
+      : "Unknown",
+    player_in_kit: s.in_player?.jersey_number ?? null,
+  }));
+
   return (
     <div className="max-w-lg">
       {/* Header nav */}
@@ -139,6 +181,7 @@ export default async function LiveMatchPage({
         h2StoppageMinutes={fixture.h2_stoppage_minutes}
         players={players}
         goals={goals}
+        substitutions={substitutions}
       />
     </div>
   );
