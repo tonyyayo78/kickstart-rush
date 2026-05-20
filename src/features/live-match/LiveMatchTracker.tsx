@@ -12,6 +12,9 @@ import {
   logGoal,
   deleteGoal,
   updateGoal,
+  logSubstitution,
+  deleteSubstitution,
+  updateSubstitution,
 } from "./actions";
 
 // ── Types ─────────────────────────────────────────────────────
@@ -43,6 +46,19 @@ export type PlayerOption = {
   last_name: string;
 };
 
+export type SubstitutionRow = {
+  id: string;
+  half: number;
+  minute: number;
+  stoppage_minutes: number;
+  player_out_id: string;
+  player_out_name: string;
+  player_out_kit: number | null;
+  player_in_id: string;
+  player_in_name: string;
+  player_in_kit: number | null;
+};
+
 export type Props = {
   fixtureId: string;
   homeTeamName: string;
@@ -57,6 +73,7 @@ export type Props = {
   h2StoppageMinutes: number;
   players: PlayerOption[];
   goals: GoalRow[];
+  substitutions: SubstitutionRow[];
 };
 
 // ── Clock logic ───────────────────────────────────────────────
@@ -140,6 +157,7 @@ export default function LiveMatchTracker({
   h2StoppageMinutes,
   players,
   goals,
+  substitutions,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -161,6 +179,18 @@ export default function LiveMatchTracker({
   const [editMinute, setEditMinute] = useState("");
   const [editStoppage, setEditStoppage] = useState("");
   const [editPlayerId, setEditPlayerId] = useState("");
+
+  // Substitution picker — two-step (out, then in)
+  const [subPickerStep, setSubPickerStep] = useState<"closed" | "out" | "in">("closed");
+  const [subPlayerOutId, setSubPlayerOutId] = useState<string | null>(null);
+  const subPickerRef = useRef<HTMLDivElement>(null);
+
+  // Substitution edit state
+  const [editingSubId, setEditingSubId] = useState<string | null>(null);
+  const [editSubMinute, setEditSubMinute] = useState("");
+  const [editSubStoppage, setEditSubStoppage] = useState("");
+  const [editSubPlayerOutId, setEditSubPlayerOutId] = useState("");
+  const [editSubPlayerInId, setEditSubPlayerInId] = useState("");
 
   // Tick clock every 15s while live
   useEffect(() => {
@@ -194,6 +224,18 @@ export default function LiveMatchTracker({
     if (pickerOpen) document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [pickerOpen]);
+
+  // Close sub picker on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (subPickerRef.current && !subPickerRef.current.contains(e.target as Node)) {
+        setSubPickerStep("closed");
+        setSubPlayerOutId(null);
+      }
+    }
+    if (subPickerStep !== "closed") document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [subPickerStep]);
 
   const clock = computeClock(matchState, h1StartedAt, h2StartedAt);
   // tick is read to force re-render each interval
@@ -264,6 +306,64 @@ export default function LiveMatchTracker({
         oppositionTeamId,
       }),
     );
+  }
+
+  function handleSubOutSelect(playerId: string) {
+    setSubPlayerOutId(playerId);
+    setSubPickerStep("in");
+  }
+
+  function handleSubInSelect(playerId: string) {
+    if (!subPlayerOutId) return;
+    if (playerId === subPlayerOutId) {
+      setError("Player in must differ from player out.");
+      return;
+    }
+    const outId = subPlayerOutId;
+    setSubPickerStep("closed");
+    setSubPlayerOutId(null);
+    run(() =>
+      logSubstitution(fixtureId, {
+        half: clock.half as 1 | 2,
+        minute: clock.minute,
+        stoppageMinutes: clock.stoppageMinutes,
+        playerOutId: outId,
+        playerInId: playerId,
+      }),
+    );
+  }
+
+  function startEditSub(s: SubstitutionRow) {
+    setEditingSubId(s.id);
+    setEditSubMinute(String(s.minute));
+    setEditSubStoppage(String(s.stoppage_minutes ?? 0));
+    setEditSubPlayerOutId(s.player_out_id);
+    setEditSubPlayerInId(s.player_in_id);
+  }
+
+  function cancelEditSub() {
+    setEditingSubId(null);
+  }
+
+  function handleSaveSubEdit() {
+    if (!editingSubId) return;
+    const min = parseInt(editSubMinute, 10);
+    const stop = parseInt(editSubStoppage, 10) || 0;
+    if (isNaN(min) || min < 1) { setError("Enter a valid minute."); return; }
+    if (editSubPlayerOutId === editSubPlayerInId) { setError("Player in must differ from player out."); return; }
+    const sub = substitutions.find((s) => s.id === editingSubId);
+    if (!sub) return;
+    run(async () => {
+      const res = await updateSubstitution(editingSubId, fixtureId, {
+        half: (sub.half as 1 | 2) ?? 1,
+        minute: min,
+        stoppageMinutes: stop,
+        playerOutId: editSubPlayerOutId,
+        playerInId: editSubPlayerInId,
+      });
+      if (!res?.error) setEditingSubId(null);
+      return res;
+    });
   }
 
   function handleSaveEdit() {
@@ -493,6 +593,68 @@ export default function LiveMatchTracker({
         </div>
       )}
 
+      {/* Substitution button + counter */}
+      {isLivePlaying && (
+        <div className="relative">
+          <button
+            className="w-full rounded-xl border-2 border-amber-500 bg-amber-50 px-4 py-4 text-base font-black text-amber-900 transition-all hover:bg-amber-100 active:scale-95 disabled:opacity-40"
+            disabled={isPending}
+            onClick={() => setSubPickerStep("out")}
+          >
+            + Substitution
+          </button>
+          <p className="mt-1 text-center text-xs text-zinc-400">
+            {substitutions.length} sub{substitutions.length === 1 ? "" : "s"} used
+          </p>
+
+          {subPickerStep !== "closed" && (
+            <div className="fixed inset-0 z-40 bg-black/40" aria-hidden="true" />
+          )}
+          {subPickerStep !== "closed" && (
+            <div
+              ref={subPickerRef}
+              className="fixed bottom-0 left-0 right-0 z-50 max-h-[70vh] overflow-y-auto rounded-t-2xl bg-white shadow-2xl"
+            >
+              <div className="sticky top-0 flex items-center justify-between border-b border-zinc-100 bg-white px-4 py-3">
+                <h2 className="font-bold text-sm uppercase tracking-wide">
+                  {subPickerStep === "out"
+                    ? `Player going off — ${clock.display}`
+                    : "Player coming on"}
+                </h2>
+                <button
+                  className="text-zinc-400 hover:text-zinc-700 text-xl leading-none"
+                  onClick={() => { setSubPickerStep("closed"); setSubPlayerOutId(null); }}
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+              <ul className="divide-y divide-zinc-100">
+                {players
+                  .filter((p) => subPickerStep !== "in" || p.id !== subPlayerOutId)
+                  .map((p) => (
+                    <li key={p.id}>
+                      <button
+                        className="w-full px-4 py-3 text-left text-sm hover:bg-zinc-50 active:bg-zinc-100 transition-colors"
+                        onClick={() =>
+                          subPickerStep === "out"
+                            ? handleSubOutSelect(p.id)
+                            : handleSubInSelect(p.id)
+                        }
+                      >
+                        <span className="mr-3 inline-block w-7 text-right font-mono text-zinc-400 text-xs">
+                          {p.jersey_number ?? "—"}
+                        </span>
+                        {p.first_name} {p.last_name}
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Goals list */}
       <div>
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500">
@@ -580,6 +742,106 @@ export default function LiveMatchTracker({
                     <DeleteGoalButton
                       isPending={isPending}
                       onConfirm={() => run(() => deleteGoal(g.id, fixtureId))}
+                    />
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Substitutions list */}
+      <div>
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500">
+          Substitutions
+        </h2>
+        {substitutions.length === 0 ? (
+          <p className="text-sm text-zinc-400">No substitutions yet.</p>
+        ) : (
+          <ul className="flex flex-col gap-1">
+            {[...substitutions].reverse().map((s) => (
+              <li key={s.id} className="rounded-lg border border-zinc-100 bg-white">
+                {editingSubId === s.id ? (
+                  <div className="flex flex-wrap items-end gap-2 p-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs text-zinc-500">Minute</label>
+                      <input
+                        type="number" min={1} max={130}
+                        value={editSubMinute}
+                        onChange={(e) => setEditSubMinute(e.target.value)}
+                        className={`${inputCls} w-20`}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs text-zinc-500">Stoppage</label>
+                      <input
+                        type="number" min={0} max={20}
+                        value={editSubStoppage}
+                        onChange={(e) => setEditSubStoppage(e.target.value)}
+                        className={`${inputCls} w-20`}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1 flex-1 min-w-[140px]">
+                      <label className="text-xs text-zinc-500">Off</label>
+                      <select
+                        value={editSubPlayerOutId}
+                        onChange={(e) => setEditSubPlayerOutId(e.target.value)}
+                        className={inputCls}
+                      >
+                        {players.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.jersey_number ? `#${p.jersey_number} ` : ""}
+                            {p.first_name} {p.last_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-1 flex-1 min-w-[140px]">
+                      <label className="text-xs text-zinc-500">On</label>
+                      <select
+                        value={editSubPlayerInId}
+                        onChange={(e) => setEditSubPlayerInId(e.target.value)}
+                        className={inputCls}
+                      >
+                        {players.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.jersey_number ? `#${p.jersey_number} ` : ""}
+                            {p.first_name} {p.last_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      className={btnPrimary}
+                      disabled={isPending}
+                      onClick={handleSaveSubEdit}
+                    >
+                      Save
+                    </button>
+                    <button className={btnSecondary} onClick={cancelEditSub}>
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 px-3 py-2.5">
+                    <span className="w-14 shrink-0 font-mono text-sm font-semibold text-zinc-700">
+                      {s.stoppage_minutes > 0 ? `${s.minute}+${s.stoppage_minutes}'` : `${s.minute}'`}
+                    </span>
+                    <span className="flex-1 text-sm text-zinc-700">
+                      <span className="text-red-600 font-semibold">↓ {s.player_out_kit ? `#${s.player_out_kit} ` : ""}{s.player_out_name}</span>
+                      <span className="mx-2 text-zinc-400">→</span>
+                      <span className="text-emerald-700 font-semibold">↑ {s.player_in_kit ? `#${s.player_in_kit} ` : ""}{s.player_in_name}</span>
+                    </span>
+                    <button
+                      className="text-xs text-zinc-400 hover:text-[#00267F] transition-colors"
+                      onClick={() => startEditSub(s)}
+                    >
+                      Edit
+                    </button>
+                    <DeleteGoalButton
+                      isPending={isPending}
+                      onConfirm={() => run(() => deleteSubstitution(s.id, fixtureId))}
                     />
                   </div>
                 )}
