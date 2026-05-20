@@ -86,20 +86,20 @@ function RowMenu({ user, approverId }: { user: ActiveUser; approverId: string })
       </button>
       {open && (
         <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-md border border-zinc-200 bg-white py-1 shadow-lg">
-          <form action={forceLogout} onClick={() => setOpen(false)}>
+          <form action={forceLogout}>
             <input type="hidden" name="userId" value={user.id} />
             <button type="submit" className="w-full px-3 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
               Force logout
             </button>
           </form>
-          <form action={suspend} onClick={() => setOpen(false)}>
+          <form action={suspend}>
             <input type="hidden" name="userId" value={user.id} />
             <button type="submit" className="w-full px-3 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
               Suspend
             </button>
           </form>
           <div className="my-1 border-t border-zinc-100" />
-          <form action={remove} onClick={() => setOpen(false)}>
+          <form action={remove}>
             <input type="hidden" name="userId" value={user.id} />
             <button type="submit" className="w-full px-3 py-1.5 text-left text-sm text-red-600 hover:bg-red-50">
               Remove
