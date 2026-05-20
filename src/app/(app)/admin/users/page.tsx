@@ -7,6 +7,8 @@ import { ActiveTable } from "./_components/active-table";
 import { SuspendedTable } from "./_components/suspended-table";
 import { RemovedTable } from "./_components/removed-table";
 import type { DecidedRequest } from "./_components/requests-table";
+import InviteUserPanel from "./_components/invite-user-panel";
+import WarningBanner from "./_components/warning-banner";
 
 type Squad = { id: string; code: string; name: string } | null;
 type ProfileRow = {
@@ -62,7 +64,7 @@ function displayNameOf(p: ProfileRow): string {
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; warning?: string }>;
 }) {
   const approver = await requireApprover();
   const admin = createAdminClient();
@@ -140,7 +142,7 @@ export default async function AdminUsersPage({
     removed: removed.length,
   };
 
-  const { tab: rawTab = "" } = await searchParams;
+  const { tab: rawTab = "", warning } = await searchParams;
   const tab: Tab =
     TABS.includes(rawTab as Tab)
       ? (rawTab as Tab)
@@ -227,6 +229,10 @@ export default async function AdminUsersPage({
         User Admin
       </h1>
       <div className="mt-2 mb-6 h-1 w-16 bg-[#FFC726]" />
+
+      {warning && <WarningBanner warning={warning} />}
+
+      {tab === "requests" && <InviteUserPanel allSquads={allSquads} />}
 
       {/* Tab strip */}
       <div className="flex border-b border-zinc-200">
