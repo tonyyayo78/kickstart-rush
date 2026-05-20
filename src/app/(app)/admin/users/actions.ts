@@ -1,7 +1,10 @@
 "use server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireApprover } from "@/lib/auth/require-approver";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendInviteEmail } from "@/lib/email/send-invite";
+import { env } from "@/lib/env";
 
 const REVALIDATE = () => revalidatePath("/admin/users");
 
@@ -26,6 +29,21 @@ function selfGuard(approverId: string, targetId: string) {
   }
 }
 
+/**
+ * Generates a 12-char temp password using CSPRNG, avoiding visually ambiguous
+ * characters (0/O, 1/l/I). User must change on first login.
+ */
+function generateTempPassword(): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  let out = "";
+  const arr = new Uint8Array(12);
+  crypto.getRandomValues(arr);
+  for (let i = 0; i < 12; i++) {
+    out += alphabet[arr[i] % alphabet.length];
+  }
+  return out;
+}
+
 export async function approveRequest(formData: FormData): Promise<void> {
   const approver = await requireApprover();
   const requestId = formData.get("requestId") as string;
@@ -42,12 +60,18 @@ export async function approveRequest(formData: FormData): Promise<void> {
   if (reqErr || !req) throw new Error("Request not found.");
   if (req.status !== "pending") throw new Error("Request is no longer pending.");
 
-  const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(req.email);
-  if (inviteErr || !invited.user) {
-    throw new Error(`Invite failed: ${inviteErr?.message ?? "unknown error"}`);
+  const tempPassword = generateTempPassword();
+
+  const { data: created, error: createErr } = await admin.auth.admin.createUser({
+    email: req.email,
+    password: tempPassword,
+    email_confirm: true,
+  });
+  if (createErr || !created.user) {
+    throw new Error(`User creation failed: ${createErr?.message ?? "unknown error"}`);
   }
 
-  const newUserId = invited.user.id;
+  const newUserId = created.user.id;
   const displayName =
     [req.first_name, req.last_name].filter(Boolean).join(" ") || req.email;
 
@@ -59,6 +83,7 @@ export async function approveRequest(formData: FormData): Promise<void> {
     role: req.role,
     status: "active",
     is_approver: false,
+    must_change_password: true,
   });
 
   if (profileErr) {
@@ -105,14 +130,33 @@ export async function approveRequest(formData: FormData): Promise<void> {
     })
     .eq("id", requestId);
 
+  const signInUrl = `${env.NEXT_PUBLIC_APP_URL ?? "https://kickstart-rush.vercel.app"}/sign-in`;
+  const emailResult = await sendInviteEmail({
+    to: req.email,
+    firstName: req.first_name ?? null,
+    tempPassword,
+    signInUrl,
+  });
+
   await writeAudit(approver.id, "admin.approve_request", newUserId, {
     request_id: requestId,
     requested_squads: requestedSquadIds,
     granted_squads: squadIds,
     overrode_request: overrideSquadIds.length > 0,
+    email_sent: emailResult.ok,
+    email_message_id: emailResult.ok ? emailResult.messageId : null,
+    email_error: emailResult.ok ? null : emailResult.error,
   });
 
   REVALIDATE();
+
+  if (!emailResult.ok) {
+    redirect(
+      `/admin/users?warning=${encodeURIComponent(
+        `User created but invite email failed. Send manually: ${req.email} / ${tempPassword}`,
+      )}`,
+    );
+  }
 }
 
 export async function denyRequest(formData: FormData): Promise<void> {
@@ -323,4 +367,106 @@ export async function updateUserSquads(formData: FormData): Promise<void> {
   });
 
   REVALIDATE();
+}
+
+export async function inviteUser(formData: FormData): Promise<void> {
+  const approver = await requireApprover();
+  const email = ((formData.get("email") as string) ?? "").trim().toLowerCase();
+  const firstName = ((formData.get("firstName") as string) ?? "").trim();
+  const lastName = ((formData.get("lastName") as string) ?? "").trim();
+  const role = ((formData.get("role") as string) ?? "").trim() || "Coach";
+  const squadIds = formData.getAll("squadIds").filter(
+    (v): v is string => typeof v === "string" && v.length > 0,
+  );
+
+  if (!email) throw new Error("Email is required.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error("Email format is invalid.");
+  }
+
+  const admin = createAdminClient();
+
+  // Duplicate check via direct profiles query (avoids listUsers 1000-row limit)
+  const { data: existingProfile } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+  if (existingProfile) {
+    throw new Error(`A user with email ${email} already exists.`);
+  }
+
+  const tempPassword = generateTempPassword();
+
+  const { data: created, error: createErr } = await admin.auth.admin.createUser({
+    email,
+    password: tempPassword,
+    email_confirm: true,
+  });
+  if (createErr || !created.user) {
+    throw new Error(`User creation failed: ${createErr?.message ?? "unknown error"}`);
+  }
+
+  const userId = created.user.id;
+  const displayName = [firstName, lastName].filter(Boolean).join(" ") || email;
+
+  const { error: profileErr } = await admin.from("profiles").insert({
+    id: userId,
+    email,
+    first_name: firstName || null,
+    display_name: displayName,
+    role,
+    status: "active",
+    is_approver: false,
+    must_change_password: true,
+  });
+
+  if (profileErr) {
+    try {
+      await admin.auth.admin.deleteUser(userId);
+    } catch (e) {
+      console.error("[inviteUser] orphan cleanup failed:", e);
+    }
+    throw new Error(`Profile creation failed: ${profileErr.message}`);
+  }
+
+  if (squadIds.length > 0) {
+    const { error: teamsErr } = await admin
+      .from("profile_teams")
+      .insert(squadIds.map((squad_id) => ({ profile_id: userId, squad_id })));
+    if (teamsErr) {
+      try {
+        await admin.auth.admin.deleteUser(userId);
+      } catch (e) {
+        console.error("[inviteUser] orphan cleanup failed:", e);
+      }
+      throw new Error(`Team linking failed: ${teamsErr.message}`);
+    }
+  }
+
+  const signInUrl = `${env.NEXT_PUBLIC_APP_URL ?? "https://kickstart-rush.vercel.app"}/sign-in`;
+  const emailResult = await sendInviteEmail({
+    to: email,
+    firstName: firstName || null,
+    tempPassword,
+    signInUrl,
+  });
+
+  await writeAudit(approver.id, "admin.invite_user", userId, {
+    invited_email: email,
+    granted_squads: squadIds,
+    email_sent: emailResult.ok,
+    email_message_id: emailResult.ok ? emailResult.messageId : null,
+    email_error: emailResult.ok ? null : emailResult.error,
+  });
+
+  REVALIDATE();
+
+  if (!emailResult.ok) {
+    redirect(
+      `/admin/users?warning=${encodeURIComponent(
+        `User created but invite email failed. Send manually: ${email} / ${tempPassword}`,
+      )}`,
+    );
+  }
 }
