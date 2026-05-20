@@ -5,8 +5,8 @@
   --rule: #1a1a1a;
   --rule-soft: #888;
 
-  width: 210mm;
-  min-height: 297mm;
+  width: 279.4mm;
+  min-height: 215.9mm;
   margin: 16px auto;
   padding: 10mm;
   background: white;
@@ -22,7 +22,7 @@
   grid-template-rows: 1fr 1fr;
   gap: 0;
   width: 100%;
-  height: 277mm;
+  height: 199.9mm;
 }
 
 .cell {
@@ -119,7 +119,7 @@
 }
 
 @page {
-  size: A4 portrait;
+  size: letter landscape;
   margin: 8mm;
 }
 
