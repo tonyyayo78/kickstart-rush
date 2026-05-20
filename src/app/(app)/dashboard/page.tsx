@@ -61,13 +61,13 @@ export default async function DashboardPage() {
         ))}
         {isApprover && (
           <a
-            href="/admin/access-requests"
+            href="/admin/users"
             className="rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-[#00267F] hover:shadow-lg"
           >
             <h2 className="text-lg font-bold uppercase tracking-tight">
-              Access requests
+              User admin
             </h2>
-            <p className="mt-1 text-sm text-zinc-600">Review and approve pending access</p>
+            <p className="mt-1 text-sm text-zinc-600">Approve requests, manage users</p>
             <p className="mt-4 font-bold text-[#FFC726]">→</p>
           </a>
         )}
