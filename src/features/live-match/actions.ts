@@ -279,7 +279,11 @@ export async function deleteSubstitution(
   fixtureId: string,
 ): Promise<ActionResult> {
   const supabase = await authed();
-  const { error } = await supabase.from("substitutions").delete().eq("id", subId);
+  const { error } = await supabase
+    .from("substitutions")
+    .delete()
+    .eq("id", subId)
+    .eq("fixture_id", fixtureId);
   if (error) return { error: "Failed to delete substitution." };
   live(fixtureId);
   return null;
@@ -311,7 +315,8 @@ export async function updateSubstitution(
       player_out_id: data.playerOutId,
       player_in_id: data.playerInId,
     })
-    .eq("id", subId);
+    .eq("id", subId)
+    .eq("fixture_id", fixtureId);
   if (error) return { error: "Failed to update substitution." };
   live(fixtureId);
   return null;
