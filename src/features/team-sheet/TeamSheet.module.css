@@ -7,8 +7,8 @@
   --rule: #1a1a1a;
   --rule-soft: #d4d4d4;
 
-  width: 210mm;
-  min-height: 297mm;
+  width: 215.9mm;
+  min-height: 279.4mm;
   margin: 16px auto;
   padding: 12mm 12mm 10mm 12mm;
   background: white;
@@ -98,14 +98,14 @@
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: end;
-  margin-top: 14px;
-  margin-bottom: 12px;
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
 .titleBlock h1 {
   font-family: var(--font-bebas), "Bebas Neue", sans-serif;
   font-weight: 400;
-  font-size: 62px;
+  font-size: 32px;
   line-height: 0.92;
   letter-spacing: 0.03em;
   margin: 0;
@@ -419,8 +419,8 @@
 
 /* ─── Print ────────────────────────────────────────────── */
 @page {
-  size: A4 portrait;
-  margin: 10mm 10mm 8mm 10mm;
+  size: letter portrait;
+  margin: 0.4in;
 }
 
 @media print {
