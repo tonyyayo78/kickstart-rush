@@ -54,10 +54,34 @@ function deriveAgeGroup(competitionName: string): string {
 
 export default async function TeamSheetPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ blank?: string }>;
 }) {
   const { id } = await params;
+  const { blank } = await searchParams;
+  const isBlank = blank === "true";
+
+  if (isBlank) {
+    const blankRow = { jerseyNumber: null as number | null, playerName: "" };
+    return (
+      <div>
+        <div className="print-controls mb-4">
+          <PrintButton />
+        </div>
+        <TeamSheet
+          fixture={{ homeTeamName: "", awayTeamName: "", kickoffAt: null, venue: null, ageGroup: "" }}
+          isHomeTeam={true}
+          starters={[]}
+          subs={Array.from({ length: 7 }, () => ({ ...blankRow }))}
+          coachName={null}
+          squadCode=""
+        />
+      </div>
+    );
+  }
+
   const supabase = await createServerClient();
 
   const { data: fixtureRaw } = await supabase
@@ -114,8 +138,16 @@ export default async function TeamSheetPage({
 
   return (
     <div>
-      <div className="print-controls mb-4">
+      <div className="print-controls mb-4 flex items-center gap-3">
         <PrintButton />
+        <a
+          href={`/fixtures/${id}/team-sheet?blank=true`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors"
+        >
+          Print Blank Form
+        </a>
       </div>
       <TeamSheet
         fixture={{

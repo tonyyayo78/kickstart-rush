@@ -446,12 +446,40 @@
     box-shadow: none;
     padding: 0;
     width: auto;
-    min-height: auto;
+    min-height: 0;
   }
 
   .playersTable,
   .meta,
   .coach {
     break-inside: avoid;
+  }
+
+  /* Root cause fix: margin-top: auto was pushing footer past the page boundary */
+  .pageFooter {
+    margin-top: 8px;
+    padding-top: 6px;
+  }
+
+  /* Print-mode vertical compression to fit US Letter content area */
+  .masthead {
+    padding-bottom: 6px;
+  }
+
+  .metaCell {
+    padding: 4px 8px;
+    min-height: 26px;
+  }
+
+  .playersTable {
+    margin-top: 4px;
+  }
+
+  .subsBand {
+    padding: 4px 10px;
+  }
+
+  .coach {
+    margin-top: 6px;
   }
 }
