@@ -60,7 +60,6 @@ export type TeamSheetProps = {
 };
 
 const STARTER_ROWS = 11;
-const SUB_ROWS = 9;
 
 function ageGroupCode(ageGroup: string): string {
   const m = ageGroup.match(/\d+/);
@@ -88,10 +87,9 @@ export function TeamSheet({
   const starterRows = [...starters];
   while (starterRows.length < STARTER_ROWS)
     starterRows.push({ jerseyNumber: null, playerName: "" });
+  starterRows.push({ jerseyNumber: null, playerName: "" });
 
-  const subRows = [...subs];
-  while (subRows.length < SUB_ROWS)
-    subRows.push({ jerseyNumber: null, playerName: "" });
+  const subRows = [...subs, { jerseyNumber: null, playerName: "" }];
 
   return (
     <div
