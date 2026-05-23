@@ -99,7 +99,7 @@ export default async function TeamSheetPage({
     .sort((a, b) => (a.player?.jersey_number ?? 99) - (b.player?.jersey_number ?? 99))
     .map((r) => ({
       jerseyNumber: r.player?.jersey_number ?? null,
-      playerName: r.player ? `${r.player.first_name} ${r.player.last_name}`.trim().replace(/\s+/g, ' ') : "",
+      playerName: r.player ? `${r.player.first_name} ${r.player.last_name}`.trim().replace(/\s+/g, ' ').toUpperCase() : "",
     }));
 
   const subs = lineupPlayers
@@ -107,7 +107,7 @@ export default async function TeamSheetPage({
     .sort((a, b) => (a.player?.jersey_number ?? 99) - (b.player?.jersey_number ?? 99))
     .map((r) => ({
       jerseyNumber: r.player?.jersey_number ?? null,
-      playerName: r.player ? `${r.player.first_name} ${r.player.last_name}`.trim().replace(/\s+/g, ' ') : "",
+      playerName: r.player ? `${r.player.first_name} ${r.player.last_name}`.trim().replace(/\s+/g, ' ').toUpperCase() : "",
     }));
 
   const ageGroup = deriveAgeGroup(fixture.competition?.name ?? "");
