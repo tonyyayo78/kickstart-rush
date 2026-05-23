@@ -35,7 +35,8 @@ type LineupPlayerRow = {
   slot_order: number;
   player: {
     id: string;
-    display_name: string;
+    first_name: string;
+    last_name: string;
     jersey_number: number | null;
   } | null;
 };
@@ -85,7 +86,7 @@ export default async function TeamSheetPage({
     .from("lineups")
     .select(
       `id, formation,
-       lineup_players(player_id, role, slot_order, player:players(id, display_name, jersey_number))`,
+       lineup_players(player_id, role, slot_order, player:players(id, first_name, last_name, jersey_number))`,
     )
     .eq("fixture_id", id)
     .maybeSingle();
@@ -98,7 +99,7 @@ export default async function TeamSheetPage({
     .sort((a, b) => (a.player?.jersey_number ?? 99) - (b.player?.jersey_number ?? 99))
     .map((r) => ({
       jerseyNumber: r.player?.jersey_number ?? null,
-      playerName: r.player?.display_name?.toUpperCase() ?? "",
+      playerName: r.player ? `${r.player.first_name} ${r.player.last_name}`.trim().replace(/\s+/g, ' ') : "",
     }));
 
   const subs = lineupPlayers
@@ -106,7 +107,7 @@ export default async function TeamSheetPage({
     .sort((a, b) => (a.player?.jersey_number ?? 99) - (b.player?.jersey_number ?? 99))
     .map((r) => ({
       jerseyNumber: r.player?.jersey_number ?? null,
-      playerName: r.player?.display_name?.toUpperCase() ?? "",
+      playerName: r.player ? `${r.player.first_name} ${r.player.last_name}`.trim().replace(/\s+/g, ' ') : "",
     }));
 
   const ageGroup = deriveAgeGroup(fixture.competition?.name ?? "");
